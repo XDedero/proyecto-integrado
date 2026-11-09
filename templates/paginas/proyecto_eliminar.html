@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Eliminar proyecto — Constructora LC{% endblock %}
+{% block content %}
+<div class="page-toolbar"><h3 class="mb-0">Eliminar proyecto</h3></div>
+<div class="bento-card" style="max-width:680px">
+    <p>Va a eliminar la obra <strong>{{ proyecto.nombre }}</strong>.</p>
+    <p>También se eliminarán sus {{ proyecto.gastos_materiales.count }} gastos de materiales, {{ proyecto.pagos_mano_obra.count }} pagos y {{ proyecto.hitos.count }} hitos. Los usuarios conservarán sus cuentas y quedarán sin esta obra asignada.</p>
+    <p>Esta acción es permanente. Puede <a href="{% url 'proyecto_editar' proyecto.pk %}">marcar la obra como inactiva</a> para conservar su historial.</p>
+    <form method="post">{% csrf_token %}<button type="submit" class="btn btn-danger">Confirmar eliminación</button> <a href="{% url 'proyecto_detalle' proyecto.pk %}" class="btn btn-outline-secondary">Cancelar</a></form>
+</div>
+{% endblock %}

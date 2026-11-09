@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ proyecto.nombre }} — Constructora LC{% endblock %}
+{% block content %}
+<div class="page-toolbar"><div><span class="label-tecnico">Proyecto #{{ proyecto.pk }}</span><h3 class="mb-0 mt-1">{{ proyecto.nombre }}</h3></div>
+<div class="d-flex flex-wrap gap-2"><a href="{% url 'proyectos' %}" class="btn btn-outline-secondary">Volver a proyectos</a>{% if es_admin %}<a href="{% url 'proyecto_editar' proyecto.pk %}" class="btn btn-obra">Editar proyecto</a><a href="{% url 'proyecto_eliminar' proyecto.pk %}" class="btn btn-outline-danger">Eliminar</a>{% endif %}</div></div>
+<div class="bento-card mb-4"><p>Inicio: <strong>{{ proyecto.fecha_inicio|date:"d/m/Y" }}</strong></p><p class="mb-0">Estado: {% if proyecto.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</p></div>
+{% if rol_usuario != 'EMPLEADO' %}
+<dl class="summary-grid">
+    <div class="summary-item"><dt>Presupuesto inicial (CLP)</dt><dd>${{ proyecto.presupuesto_inicial }}</dd></div>
+    <div class="summary-item"><dt>Materiales (CLP)</dt><dd>${{ proyecto.total_materiales }}</dd></div>
+    <div class="summary-item"><dt>Mano de obra (CLP)</dt><dd>${{ proyecto.total_mano_obra }}</dd></div>
+    <div class="summary-item"><dt>Saldo disponible (CLP)</dt><dd class="{% if proyecto.saldo_disponible < 0 %}text-danger{% endif %}">${{ proyecto.saldo_disponible }}</dd></div>
+</dl>
+<div class="bento-card mb-4"><h5>Personal asignado</h5>
+    <ul class="mb-0">{% for perfil in personal %}<li>{{ perfil.usuario.get_full_name|default:perfil.usuario.username }} — {{ perfil.especialidad|default:"Sin especialidad" }}{% if not perfil.usuario.is_active %} (cuenta inactiva){% endif %}</li>{% empty %}<li class="text-muted">Sin personal asignado.</li>{% endfor %}</ul>
+    {% if es_admin %}<a href="{% url 'registro_usuario' %}" class="btn btn-outline-secondary mt-3">Gestionar asignaciones de usuarios</a>{% endif %}
+</div>
+{% endif %}
+<div class="bento-card"><h5>Hitos del proyecto</h5><div class="table-responsive"><table class="table mb-0">
+    <thead><tr><th scope="col">Hito</th><th scope="col">Fecha</th><th scope="col">Estado</th></tr></thead>
+    <tbody>{% for hito in hitos %}<tr><th scope="row">{{ hito.nombre }}</th><td>{{ hito.fecha|date:"d/m/Y" }}</td><td>{% if hito.completado %}Completado{% else %}Pendiente{% endif %}</td></tr>{% empty %}<tr><td colspan="3" class="text-muted">No hay hitos registrados.</td></tr>{% endfor %}</tbody>
+</table></div></div>
+{% endblock %}

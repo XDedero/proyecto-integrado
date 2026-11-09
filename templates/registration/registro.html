@@ -1,99 +1,33 @@
 {% extends "base.html" %}
-
-{% block title %}Accesos y Personal — Constructora LC{% endblock %}
-
+{% block title %}Usuarios y personal — Constructora LC{% endblock %}
 {% block content %}
-<div class="pb-3 mb-4 border-bottom" style="border-color: #d6d3c9 !important;">
-    <span class="label-tecnico">Administración / Personal</span>
-    <h3 class="fw-bold mb-0 mt-1">Usuarios y personal</h3>
-</div>
-
+<div class="page-toolbar"><div><span class="label-tecnico">Administración</span><h3 class="mb-0 mt-1">Usuarios y personal</h3></div></div>
+<p class="text-muted">Administrador: gestión completa. Visualizador: consulta general. Empleado: su obra y sus pagos.</p>
 <div class="row g-4">
-    <div class="col-lg-5">
-        <div class="bento-card">
-            <h5 class="fw-bold mb-3">Registrar Cuenta Nueva</h5>
-            <form method="POST" action="{% url 'registro_usuario' %}">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Nombre Completo</label>
-                    <input type="text" name="first_name" class="form-control" placeholder="Ej: Juan Carlos Muñoz" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Nombre de Usuario (Login)</label>
-                    <input type="text" name="username" class="form-control" placeholder="Ej: jc_munoz" required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Contraseña</label>
-                    <input type="password" name="password" class="form-control" placeholder="Mínimo 6 caracteres" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="rol" class="form-label small fw-bold">Rol en el Sistema</label>
-                    <select id="rol" name="rol" class="form-select" required>
-                        <option value="EMPLEADO">Empleado / Trabajador (Entra al Portal de Terreno)</option>
-                        <option value="VISUALIZADOR">Visualizador / Contador (Solo Lectura)</option>
-                        <option value="ADMIN">Administrador (Control Total)</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Cargo o Especialidad (Para Empleados)</label>
-                    <input type="text" name="especialidad" class="form-control" value="Maestro Primera — Carpintería">
-                </div>
-
-                <div class="mb-4">
-                    <label for="obra_id" class="form-label small fw-bold">Obra Asignada (Opcional)</label>
-                    <select id="obra_id" name="obra_id" class="form-select">
-                        <option value="">— Sin obra específica —</option>
-                        {% for p in proyectos %}
-                            <option value="{{ p.id }}">{{ p.nombre }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <button type="submit" class="btn btn-ambar w-100 py-2">
-                    <i class="bi bi-person-plus-fill me-1"></i> Guardar usuario
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div class="col-lg-7">
-        <div class="bento-card">
-            <h5 class="fw-bold mb-3">Personal y Usuarios Registrados</h5>
-            <div class="table-responsive">
-                <table class="table align-middle mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Usuario</th>
-                            <th>Nombre</th>
-                            <th>Rol / Vista</th>
-                            <th>Obra Asignada</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for u in usuarios %}
-                        <tr>
-                            <td class="fw-bold">{{ u.username }}</td>
-                            <td>{{ u.first_name|default:"—" }}</td>
-                            <td>
-                                {% if u.perfil.rol == 'EMPLEADO' %}
-                                    <span class="badge bg-warning text-dark">Empleado ({{ u.perfil.especialidad }})</span>
-                                {% elif u.is_staff or u.perfil.rol == 'ADMIN' %}
-                                    <span class="badge bg-dark">Administrador</span>
-                                {% else %}
-                                    <span class="badge bg-secondary">Visualizador (Contador)</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ u.perfil.obra_asignada.nombre|default:"General" }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+    <div class="col-xl-4"><div class="bento-card">
+        <h5>Crear usuario</h5>
+        <form method="post" action="{% url 'registro_usuario' %}" novalidate>{% csrf_token %}{% include "includes/form_campos.html" %}
+            <button type="submit" class="btn btn-obra w-100">Guardar usuario</button>
+        </form>
+    </div></div>
+    <div class="col-xl-8"><div class="bento-card"><h5>Usuarios registrados</h5>
+        <div class="table-responsive"><table class="table align-middle mb-0">
+            <thead><tr><th scope="col">Usuario</th><th scope="col">Nombre</th><th scope="col">Rol</th><th scope="col">Obra</th><th scope="col">Estado</th><th scope="col">Acciones</th></tr></thead>
+            <tbody>{% for u in usuarios %}<tr>
+                <th scope="row"><a href="{% url 'usuario_detalle' u.pk %}">{{ u.username }}</a></th>
+                <td>{{ u.get_full_name|default:"Sin nombre" }}</td>
+                <td>{% if u.is_superuser %}Administrador (superusuario){% elif u.perfil %}{{ u.perfil.get_rol_display }}{% elif u.is_staff %}Administrador{% else %}Empleado{% endif %}</td>
+                <td>{{ u.perfil.obra_asignada.nombre|default:"Sin asignar" }}</td>
+                <td>{% if u.is_active %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</td>
+                <td><div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'usuario_detalle' u.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Ver usuario {{ u.username }}">Ver</a>
+                    {% if not u.is_superuser or user.is_superuser %}
+                    <a href="{% url 'usuario_editar' u.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Editar usuario {{ u.username }}">Editar</a>
+                    {% if u.pk != user.pk %}<a href="{% url 'usuario_eliminar' u.pk %}" class="btn btn-sm btn-outline-danger" aria-label="Eliminar usuario {{ u.username }}">Eliminar</a>{% endif %}
+                    {% endif %}
+                </div></td>
+            </tr>{% empty %}<tr><td colspan="6" class="text-muted text-center">No hay usuarios registrados.</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </div></div>
 </div>
 {% endblock %}

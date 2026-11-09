@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Editar usuario — Constructora LC{% endblock %}
+{% block content %}
+<div class="page-toolbar"><h3 class="mb-0">Editar usuario: {{ cuenta.username }}</h3><a href="{% url 'registro_usuario' %}" class="btn btn-outline-secondary">Volver a usuarios</a></div>
+<div class="bento-card" style="max-width:680px"><form method="post" novalidate>
+    {% csrf_token %}{% include "includes/form_campos.html" %}
+    <button type="submit" class="btn btn-obra">Guardar cambios</button>
+    <a href="{% url 'usuario_detalle' cuenta.pk %}" class="btn btn-outline-secondary">Cancelar</a>
+</form></div>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Eliminar usuario — Constructora LC{% endblock %}
+{% block content %}
+<div class="page-toolbar"><h3 class="mb-0">Eliminar usuario</h3></div>
+<div class="bento-card" style="max-width:640px">
+    <p>Va a eliminar permanentemente la cuenta <strong>{{ cuenta.username }}</strong> y su perfil.</p>
+    <p>Sus pagos registrados se conservarán con el nombre del trabajador. Para conservar la cuenta sin permitirle iniciar sesión, puede <a href="{% url 'usuario_editar' cuenta.pk %}">desactivarla</a>.</p>
+    <form method="post">{% csrf_token %}<button type="submit" class="btn btn-danger">Confirmar eliminación</button> <a href="{% url 'usuario_detalle' cuenta.pk %}" class="btn btn-outline-secondary">Cancelar</a></form>
+</div>
+{% endblock %}

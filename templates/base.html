@@ -70,6 +70,9 @@ h3 { font-size:21px; font-weight:600!important; color:#293f54; } h4 { font-size:
 
             <div class="nav-caption">Administración</div>
             <nav class="nav flex-column nav-obra">
+                {% if rol_usuario == 'EMPLEADO' %}
+                <a class="nav-link" href="{% url 'portal_empleado' %}"><i class="bi bi-person-vcard"></i> Mi portal</a>
+                {% else %}
                 <a class="nav-link{% if request.resolver_match.url_name == 'inicio' %} active{% endif %}" {% if request.resolver_match.url_name == 'inicio' %}aria-current="page"{% endif %} href="{% url 'inicio' %}">
                     <i class="bi bi-grid-1x2-fill"></i> Resumen de obras
                 </a>
@@ -79,11 +82,12 @@ h3 { font-size:21px; font-weight:600!important; color:#293f54; } h4 { font-size:
                 <a class="nav-link{% if request.resolver_match.url_name == 'calendario' %} active{% endif %}" {% if request.resolver_match.url_name == 'calendario' %}aria-current="page"{% endif %} href="{% url 'calendario' %}">
                     <i class="bi bi-calendar2-week"></i> Calendario de obras
                 </a>
-                {% if user.is_staff or user.perfil.rol == 'ADMIN' %}
-                <a class="nav-link{% if request.resolver_match.url_name == 'proyectos' %} active{% endif %}" {% if request.resolver_match.url_name == 'proyectos' %}aria-current="page"{% endif %} href="{% url 'proyectos' %}">
+                {% endif %}
+                <a class="nav-link{% if '/proyectos/' in request.path %} active{% endif %}" {% if request.resolver_match.url_name == 'proyectos' %}aria-current="page"{% endif %} href="{% url 'proyectos' %}">
                     <i class="bi bi-building-add"></i> Obras y presupuestos
                 </a>
-                <a class="nav-link{% if request.resolver_match.url_name == 'registro_usuario' %} active{% endif %}" {% if request.resolver_match.url_name == 'registro_usuario' %}aria-current="page"{% endif %} href="{% url 'registro_usuario' %}">
+                {% if es_admin %}
+                <a class="nav-link{% if '/usuarios/' in request.path %} active{% endif %}" {% if request.resolver_match.url_name == 'registro_usuario' %}aria-current="page"{% endif %} href="{% url 'registro_usuario' %}">
                     <i class="bi bi-shield-lock"></i> Usuarios y personal
                 </a>
                 {% endif %}
@@ -93,15 +97,18 @@ h3 { font-size:21px; font-weight:600!important; color:#293f54; } h4 { font-size:
         <div class="pt-3 border-top border-secondary border-opacity-25">
             <div class="mb-2">
                 <div class="fw-semibold small">{{ user.first_name|default:user.username }}</div>
-                {% if user.is_staff or user.perfil.rol == 'ADMIN' %}
+                {% if es_admin %}
                     <span class="badge bg-warning text-dark" style="font-size: 0.68rem;">ADMINISTRADOR</span>
+                {% elif rol_usuario == 'EMPLEADO' %}
+                    <span class="badge bg-secondary" style="font-size: 0.68rem;">EMPLEADO</span>
                 {% else %}
                     <span class="badge bg-secondary" style="font-size: 0.68rem;">VISUALIZADOR (LECTURA)</span>
                 {% endif %}
             </div>
-            <a href="{% url 'logout' %}" class="btn btn-outline-light btn-sm w-100 mt-1">
+            <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+            <button type="submit" class="btn btn-outline-light btn-sm w-100 mt-1">
                 <i class="bi bi-box-arrow-left me-1"></i> Cerrar sesión
-            </a>
+            </button></form>
         </div>
     </aside>
 

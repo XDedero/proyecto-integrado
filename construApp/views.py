@@ -1,21 +1,14 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
-from django.db.models import Q
-from .models import Proyecto, PerfilUsuario, GastoMaterial, PagoManoObra, HitoCalendario
-
-
-def obtener_rol_usuario(user):
-    """Determina el rol del usuario autenticado: ADMIN, VISUALIZADOR o EMPLEADO."""
-    if not user.is_authenticated:
-        return None
-    if hasattr(user, "perfil"):
-        return user.perfil.rol
-    if user.is_superuser or user.is_staff:
-        return "ADMIN"
-    return "VISUALIZADOR"
+from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError, transaction
+from django.views.decorators.http import require_http_methods, require_POST
+from .forms import ProyectoForm, UsuarioForm
+from .models import Proyecto, GastoMaterial, PagoManoObra, HitoCalendario
+from .permisos import obtener_rol_usuario, proyectos_visibles, solo_administrador
 
 
 # ==============================================================================
@@ -46,6 +39,7 @@ def iniciar_sesion(request):
     return render(request, "registration/login.html")
 
 
+@require_POST
 def cerrar_sesion(request):
     """Cierra la sesión de cualquier perfil y vuelve al login."""
     logout(request)
@@ -63,21 +57,15 @@ def portal_empleado(request):
     obra_actual = perfil.obra_asignada if perfil else None
     especialidad = perfil.especialidad if perfil else "Trabajador de Terreno"
 
-    # Filtrar únicamente los pagos que pertenecen a este trabajador
-    nombre_completo = request.user.first_name.strip()
-    filtro_pagos = Q(empleado=request.user)
-    if nombre_completo:
-        filtro_pagos |= Q(trabajador__iexact=nombre_completo)
-    filtro_pagos |= Q(trabajador__iexact=request.user.username)
-
-    mis_pagos = PagoManoObra.objects.filter(filtro_pagos).distinct()
+    # La identidad se determina por la cuenta, nunca por coincidencias de nombre.
+    mis_pagos = PagoManoObra.objects.filter(empleado=request.user).select_related("proyecto")
     total_ganado = sum(p.monto for p in mis_pagos)
 
     # Hitos de la obra asignada al trabajador
     if obra_actual:
         hitos = HitoCalendario.objects.filter(proyecto=obra_actual, completado=False)
     else:
-        hitos = HitoCalendario.objects.filter(completado=False)[:4]
+        hitos = HitoCalendario.objects.none()
 
     contexto = {
         "perfil": perfil,
@@ -121,51 +109,80 @@ def inicio(request):
 
 
 @login_required(login_url="login")
+@require_http_methods(["GET", "POST"])
 def proyectos_view(request):
-    """Registro y listado de obras con presupuesto inicial mayor a 0 (HU-04)."""
+    """Listado según rol y creación de obras por administradores."""
     rol = obtener_rol_usuario(request.user)
-    if rol == "EMPLEADO":
-        return redirect("portal_empleado")
-    if rol != "ADMIN":
-        messages.error(request, "El rol Visualizador solo tiene permisos de lectura.")
-        return redirect("inicio")
-
-    if request.method == "POST":
-        nombre = request.POST.get("nombre", "").strip()
-        presupuesto = int(request.POST.get("presupuesto_inicial", 0) or 0)
-        fecha_inicio = request.POST.get("fecha_inicio", "")
-
-        if presupuesto <= 0:
-            messages.error(request, "El presupuesto inicial debe ser mayor a 0 CLP.")
-        elif Proyecto.objects.filter(nombre__iexact=nombre).exists():
-            messages.error(request, "Ya existe una obra registrada con ese nombre.")
+    if request.method == "POST" and rol != "ADMIN":
+        raise PermissionDenied("Solo el administrador puede crear proyectos.")
+    form = ProyectoForm(request.POST if request.method == "POST" else None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            with transaction.atomic():
+                proyecto = form.save()
+        except IntegrityError:
+            form.add_error("nombre", "Ya existe una obra registrada con ese nombre.")
         else:
-            Proyecto.objects.create(
-                nombre=nombre,
-                presupuesto_inicial=presupuesto,
-                fecha_inicio=fecha_inicio,
-            )
-            messages.success(request, f"Obra '{nombre}' adjudicada correctamente.")
+            messages.success(request, f"Obra '{proyecto.nombre}' creada correctamente.")
             return redirect("proyectos")
+    return render(request, "paginas/proyectos.html", {
+        "proyectos": proyectos_visibles(request.user), "form": form,
+    })
 
-    proyectos = Proyecto.objects.all()
-    return render(request, "paginas/proyectos.html", {"proyectos": proyectos, "es_admin": True})
+
+@login_required(login_url="login")
+@require_http_methods(["GET"])
+def proyecto_detalle(request, pk):
+    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    return render(request, "paginas/proyecto_detalle.html", {
+        "proyecto": proyecto,
+        "personal": proyecto.trabajadores_asignados.select_related("usuario"),
+        "hitos": proyecto.hitos.all(),
+    })
+
+
+@solo_administrador
+@require_http_methods(["GET", "POST"])
+def proyecto_editar(request, pk):
+    proyecto = get_object_or_404(Proyecto, pk=pk)
+    form = ProyectoForm(request.POST if request.method == "POST" else None, instance=proyecto)
+    if request.method == "POST" and form.is_valid():
+        try:
+            with transaction.atomic():
+                form.save()
+        except IntegrityError:
+            form.add_error("nombre", "Ya existe una obra registrada con ese nombre.")
+        else:
+            messages.success(request, "Proyecto actualizado correctamente.")
+            return redirect("proyecto_detalle", pk=proyecto.pk)
+    return render(request, "paginas/proyecto_form.html", {"form": form, "proyecto": proyecto})
+
+
+@solo_administrador
+@require_http_methods(["GET", "POST"])
+def proyecto_eliminar(request, pk):
+    proyecto = get_object_or_404(Proyecto, pk=pk)
+    if request.method == "POST":
+        nombre = proyecto.nombre
+        with transaction.atomic():
+            proyecto.delete()
+        messages.success(request, f"Proyecto '{nombre}' eliminado correctamente.")
+        return redirect("proyectos")
+    return render(request, "paginas/proyecto_eliminar.html", {"proyecto": proyecto})
 
 
 @login_required(login_url="login")
 def finanzas_view(request):
     """Libro de Finanzas para registrar Materiales (HU-05) y Mano de Obra (HU-06)."""
     rol = obtener_rol_usuario(request.user)
+    if request.method == "POST" and rol != "ADMIN":
+        raise PermissionDenied("Solo el administrador puede registrar gastos y pagos.")
     if rol == "EMPLEADO":
         return redirect("portal_empleado")
 
     es_admin = (rol == "ADMIN")
 
     if request.method == "POST":
-        if not es_admin:
-            messages.error(request, "Acción denegada: el rol Visualizador no puede registrar gastos.")
-            return redirect("finanzas")
-
         tipo_egreso = request.POST.get("tipo_egreso", "MATERIAL")
         proyecto_id = request.POST.get("proyecto_id")
         monto = int(request.POST.get("monto", 0) or 0)
@@ -225,6 +242,8 @@ def finanzas_view(request):
 def calendario_view(request):
     """Gestión de hitos y semáforo automático en rojo, amarillo y verde (HU-08 y HU-09)."""
     rol = obtener_rol_usuario(request.user)
+    if request.method == "POST" and rol != "ADMIN":
+        raise PermissionDenied("Solo el administrador puede modificar el calendario.")
     if rol == "EMPLEADO":
         return redirect("portal_empleado")
 
@@ -250,49 +269,70 @@ def calendario_view(request):
     })
 
 
-@login_required(login_url="login")
+@solo_administrador
+@require_http_methods(["GET", "POST"])
 def registro_usuario(request):
-    """Permite al Administrador crear cuentas de Administrador, Visualizador o Empleado (HU-02)."""
-    rol_actual = obtener_rol_usuario(request.user)
-    if rol_actual != "ADMIN":
-        messages.error(request, "Solo el Administrador puede gestionar las cuentas de usuario.")
-        return redirect("inicio")
-
-    if request.method == "POST":
-        username = request.POST.get("username", "").strip()
-        nombre_completo = request.POST.get("first_name", "").strip()
-        password = request.POST.get("password", "")
-        rol_nuevo = request.POST.get("rol", "EMPLEADO")
-        especialidad = request.POST.get("especialidad", "Maestro de Obra").strip()
-        obra_id = request.POST.get("obra_id")
-        obra_obj = Proyecto.objects.filter(id=obra_id).first() if obra_id else None
-
-        if User.objects.filter(username=username).exists():
-            messages.error(request, "El nombre de usuario ya existe. Elija otro identificador.")
-        elif len(password) < 6:
-            messages.error(request, "La contraseña debe tener al menos 6 caracteres.")
+    """Creación atómica de cuenta y perfil, y listado exclusivo del administrador."""
+    form = UsuarioForm(request.POST if request.method == "POST" else None, actor=request.user)
+    if request.method == "POST" and form.is_valid():
+        try:
+            nuevo_user = form.save()
+        except IntegrityError:
+            form.add_error(None, "No se pudo guardar la cuenta. Revise que el usuario no esté duplicado.")
         else:
-            nuevo_user = User.objects.create_user(
-                username=username,
-                password=password,
-                first_name=nombre_completo,
-            )
-            nuevo_user.is_staff = (rol_nuevo == "ADMIN")
-            nuevo_user.save()
-
-            PerfilUsuario.objects.create(
-                usuario=nuevo_user,
-                rol=rol_nuevo,
-                especialidad=especialidad,
-                obra_asignada=obra_obj,
-            )
-            messages.success(request, f"Cuenta '{username}' creada con perfil {rol_nuevo}.")
+            messages.success(request, f"Cuenta '{nuevo_user.username}' creada correctamente.")
             return redirect("registro_usuario")
-
-    usuarios = User.objects.select_related("perfil", "perfil__obra_asignada").all()
-    proyectos = Proyecto.objects.filter(activo=True)
     return render(request, "registration/registro.html", {
-        "es_admin": True,
-        "usuarios": usuarios,
-        "proyectos": proyectos,
+        "form": form,
+        "usuarios": User.objects.select_related("perfil", "perfil__obra_asignada").order_by("username"),
     })
+
+
+def usuario_gestionable(request, pk):
+    usuario = get_object_or_404(User.objects.select_related("perfil", "perfil__obra_asignada"), pk=pk)
+    if usuario.is_superuser and not request.user.is_superuser:
+        raise PermissionDenied("Solo un superusuario puede gestionar esta cuenta.")
+    return usuario
+
+
+@solo_administrador
+@require_http_methods(["GET"])
+def usuario_detalle(request, pk):
+    usuario = get_object_or_404(User.objects.select_related("perfil", "perfil__obra_asignada"), pk=pk)
+    return render(request, "registration/usuario_detalle.html", {
+        "cuenta": usuario,
+        "rol_cuenta": obtener_rol_usuario(usuario) or getattr(getattr(usuario, "perfil", None), "rol", "EMPLEADO"),
+    })
+
+
+@solo_administrador
+@require_http_methods(["GET", "POST"])
+def usuario_editar(request, pk):
+    usuario = usuario_gestionable(request, pk)
+    form = UsuarioForm(request.POST if request.method == "POST" else None, instance=usuario, actor=request.user)
+    if request.method == "POST" and form.is_valid():
+        try:
+            usuario = form.save()
+        except IntegrityError:
+            form.add_error(None, "No se pudo guardar la cuenta. Revise que el usuario no esté duplicado.")
+        else:
+            if usuario.pk == request.user.pk:
+                update_session_auth_hash(request, usuario)
+            messages.success(request, "Usuario actualizado correctamente.")
+            return redirect("usuario_detalle", pk=usuario.pk)
+    return render(request, "registration/usuario_form.html", {"form": form, "cuenta": usuario})
+
+
+@solo_administrador
+@require_http_methods(["GET", "POST"])
+def usuario_eliminar(request, pk):
+    usuario = usuario_gestionable(request, pk)
+    if usuario.pk == request.user.pk:
+        raise PermissionDenied("No puede eliminar su propia cuenta de administrador.")
+    if request.method == "POST":
+        username = usuario.username
+        with transaction.atomic():
+            usuario.delete()
+        messages.success(request, f"Usuario '{username}' eliminado correctamente.")
+        return redirect("registro_usuario")
+    return render(request, "registration/usuario_eliminar.html", {"cuenta": usuario})

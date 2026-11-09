@@ -1,59 +1,36 @@
 {% extends "base.html" %}
-
-{% block title %}Obras y Presupuestos — Constructora LC{% endblock %}
-
+{% block title %}Proyectos — Constructora LC{% endblock %}
 {% block content %}
-<div class="pb-3 mb-4 border-bottom" style="border-color: #d6d3c9 !important;">
-    <span class="label-tecnico">Administración / Obras</span>
-    <h3 class="fw-bold mb-0 mt-1">Obras y presupuestos</h3>
+<div class="page-toolbar">
+    <div><span class="label-tecnico">Gestión de obras</span><h3 class="mb-0 mt-1">{% if rol_usuario == 'EMPLEADO' %}Mi proyecto asignado{% else %}Obras y presupuestos{% endif %}</h3></div>
+    {% if rol_usuario == 'EMPLEADO' %}<a href="{% url 'portal_empleado' %}" class="btn btn-outline-secondary">Volver a mi portal</a>{% endif %}
 </div>
-
+{% if rol_usuario == 'VISUALIZADOR' %}<p class="text-muted">Su cuenta tiene permisos de consulta de proyectos.</p>{% endif %}
 <div class="row g-4">
-    <div class="col-lg-4">
-        <div class="bento-card">
-            <h5 class="fw-bold mb-3">Registrar Nueva Obra</h5>
-            <form method="POST" action="{% url 'proyectos' %}">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Nombre de la Obra</label>
-                    <input type="text" name="nombre" class="form-control" placeholder="Ej: Cabaña en la Costa" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label small fw-bold">Presupuesto Inicial (CLP)</label>
-                    <input type="number" name="presupuesto_inicial" class="form-control" min="1" placeholder="Ej: 45000000" required>
-                </div>
-                <div class="mb-4">
-                    <label class="form-label small fw-bold">Fecha de Inicio</label>
-                    <input type="date" name="fecha_inicio" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-obra w-100 py-2">
-                    <i class="bi bi-building-check me-1"></i> Guardar Proyecto
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <div class="col-lg-8">
-        <div class="bento-card">
-            <h5 class="fw-bold mb-3">Listado de obras</h5>
-            {% for p in proyectos %}
-            <div class="ficha-obra">
-                <div class="d-flex flex-wrap justify-content-between align-items-center">
-                    <div>
-                        <span class="badge bg-dark mb-1">OBRA #{{ p.id }}</span>
-                        <h6 class="fw-bold mb-0">{{ p.nombre }}</h6>
-                        <small class="text-muted">Fecha inicio: {{ p.fecha_inicio }}</small>
-                    </div>
-                    <div class="text-end">
-                        <div class="label-tecnico">Presupuesto / Saldo Actual</div>
-                        <div class="fw-bold cifra-monetaria">${{ p.presupuesto_inicial }} / <span class="text-success">${{ p.saldo_disponible }} CLP</span></div>
-                    </div>
-                </div>
-            </div>
-            {% empty %}
-            <p class="text-muted small mb-0">No hay proyectos registrados todavía.</p>
-            {% endfor %}
-        </div>
-    </div>
+    {% if es_admin %}
+    <div class="col-lg-4"><div class="bento-card">
+        <h5>Registrar nueva obra</h5>
+        <form method="post" action="{% url 'proyectos' %}" novalidate>
+            {% csrf_token %}{% include "includes/form_campos.html" %}
+            <button type="submit" class="btn btn-obra w-100">Guardar proyecto</button>
+        </form>
+    </div></div>
+    {% endif %}
+    <div class="{% if es_admin %}col-lg-8{% else %}col-12{% endif %}"><div class="bento-card">
+        <h5>Listado de obras</h5>
+        <div class="table-responsive"><table class="table align-middle mb-0">
+            <thead><tr><th scope="col">Obra</th><th scope="col">Inicio</th><th scope="col">Estado</th>{% if rol_usuario != 'EMPLEADO' %}<th scope="col" class="text-end">Presupuesto (CLP)</th>{% endif %}<th scope="col">Acciones</th></tr></thead>
+            <tbody>{% for p in proyectos %}<tr>
+                <th scope="row"><a href="{% url 'proyecto_detalle' p.pk %}">{{ p.nombre }}</a></th>
+                <td>{{ p.fecha_inicio|date:"d/m/Y" }}</td>
+                <td>{% if p.activo %}<span class="badge bg-success">Activa</span>{% else %}<span class="badge bg-secondary">Inactiva</span>{% endif %}</td>
+                {% if rol_usuario != 'EMPLEADO' %}<td class="text-end cifra-monetaria">${{ p.presupuesto_inicial }}</td>{% endif %}
+                <td><div class="d-flex flex-wrap gap-2">
+                    <a href="{% url 'proyecto_detalle' p.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Ver {{ p.nombre }}">Ver</a>
+                    {% if es_admin %}<a href="{% url 'proyecto_editar' p.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Editar {{ p.nombre }}">Editar</a><a href="{% url 'proyecto_eliminar' p.pk %}" class="btn btn-sm btn-outline-danger" aria-label="Eliminar {{ p.nombre }}">Eliminar</a>{% endif %}
+                </div></td>
+            </tr>{% empty %}<tr><td colspan="5" class="text-muted text-center py-4">{% if rol_usuario == 'EMPLEADO' %}Aún no tiene una obra asignada.{% else %}No hay proyectos registrados.{% endif %}</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </div></div>
 </div>
 {% endblock %}
