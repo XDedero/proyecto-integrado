@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Obras y Presupuestos — Constructora LC{% endblock %}
+
+{% block content %}
+<div class="pb-3 mb-4 border-bottom" style="border-color: #d6d3c9 !important;">
+    <span class="label-tecnico">ADJUDICACIÓN DE OBRAS Y PRESUPUESTO INICIAL (HU-04)</span>
+    <h3 class="fw-bold mb-0 mt-1">Gestión de Proyectos</h3>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="bento-card">
+            <h5 class="fw-bold mb-3">Registrar Nueva Obra</h5>
+            <form method="POST" action="{% url 'proyectos' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Nombre de la Obra</label>
+                    <input type="text" name="nombre" class="form-control" placeholder="Ej: Cabaña en la Costa" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Presupuesto Inicial (CLP)</label>
+                    <input type="number" name="presupuesto_inicial" class="form-control" min="1" placeholder="Ej: 45000000" required>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small fw-bold">Fecha de Inicio</label>
+                    <input type="date" name="fecha_inicio" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-obra w-100 py-2">
+                    <i class="bi bi-building-check me-1"></i> Guardar Proyecto
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="bento-card">
+            <h5 class="fw-bold mb-3">Listado de Obras Activas</h5>
+            {% for p in proyectos %}
+            <div class="ficha-obra">
+                <div class="d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-dark mb-1">OBRA #{{ p.id }}</span>
+                        <h6 class="fw-bold mb-0">{{ p.nombre }}</h6>
+                        <small class="text-muted">Fecha inicio: {{ p.fecha_inicio }}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="label-tecnico">Presupuesto / Saldo Actual</div>
+                        <div class="fw-bold cifra-monetaria">${{ p.presupuesto_inicial }} / <span class="text-success">${{ p.saldo_disponible }} CLP</span></div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <p class="text-muted small mb-0">No hay proyectos registrados todavía.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

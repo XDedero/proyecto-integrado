@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Centro de Comando — Constructora LC{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-end pb-3 mb-4 border-bottom" style="border-color: #d6d3c9 !important;">
+    <div>
+        <span class="label-tecnico">PANORAMA FINANCIERO EN TIEMPO REAL</span>
+        <h3 class="fw-bold mb-0 mt-1">Estado General de Obras</h3>
+    </div>
+    {% if es_admin %}
+    <div class="d-flex gap-2 mt-2 mt-md-0">
+        <a href="{% url 'proyectos' %}" class="btn btn-obra btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> Adjudicar Obra
+        </a>
+        <a href="{% url 'finanzas' %}" class="btn btn-ambar btn-sm">
+            <i class="bi bi-file-earmark-plus me-1"></i> Ingresar Factura / Jornal
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="bento-dark h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-uppercase small fw-bold" style="color: #fbbf24; letter-spacing: 0.1em;">
+                        <i class="bi bi-safe2 me-1"></i> Bóveda Consolidada (HU-07 / HU-10)
+                    </span>
+                    <span class="badge bg-light text-dark">{{ total_proyectos }} Obras Activas</span>
+                </div>
+                <div class="text-secondary small">Saldo Líquido Disponible en Obras</div>
+                <div class="display-5 cifra-monetaria text-white my-1">
+                    ${{ saldo_global }} <span class="fs-5 fw-normal text-secondary">CLP</span>
+                </div>
+            </div>
+
+            <div class="row g-3 pt-3 mt-3 border-top border-secondary border-opacity-25">
+                <div class="col-sm-6">
+                    <div class="small text-secondary">Presupuesto Inicial Adjudicado</div>
+                    <div class="fs-5 fw-bold cifra-monetaria" style="color: #4ade80;">
+                        ${{ presupuesto_total }} CLP
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="small text-secondary">Total Ejecutado (Materiales + Mano de Obra)</div>
+                    <div class="fs-5 fw-bold cifra-monetaria" style="color: #f87171;">
+                        ${{ gastos_totales }} CLP
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="bento-card h-100 d-flex flex-column justify-content-between">
+            <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="label-tecnico">RADAR DE VENCIMIENTO INMEDIATO</span>
+                    <a href="{% url 'calendario' %}" class="small text-decoration-none fw-semibold" style="color: #d97706;">
+                        Ver agenda <i class="bi bi-arrow-right"></i>
+                    </a>
+                </div>
+
+                {% if proximo_hito %}
+                    <h5 class="fw-bold mb-1 mt-2">{{ proximo_hito.nombre }}</h5>
+                    <p class="text-muted small mb-3">
+                        Obra asociada: <strong>{{ proximo_hito.proyecto.nombre }}</strong>
+                    </p>
+
+                    <div class="p-3 rounded-3 d-flex align-items-center justify-content-between
+                        {% if proximo_hito.color_alerta == 'rojo' %}bg-danger-subtle text-danger-emphasis
+                        {% elif proximo_hito.color_alerta == 'amarillo' %}bg-warning-subtle text-warning-emphasis
+                        {% else %}bg-success-subtle text-success-emphasis{% endif %}">
+                        <div>
+                            <div class="fw-bold small text-uppercase">Fecha Límite: {{ proximo_hito.fecha }}</div>
+                            <div class="small">
+                                Restan {{ proximo_hito.dias_restantes }} días
+                            </div>
+                        </div>
+                        <span class="badge rounded-pill
+                            {% if proximo_hito.color_alerta == 'rojo' %}bg-danger
+                            {% elif proximo_hito.color_alerta == 'amarillo' %}bg-warning text-dark
+                            {% else %}bg-success{% endif %}">
+                            ALERTA {{ proximo_hito.color_alerta|upper }}
+                        </span>
+                    </div>
+                {% else %}
+                    <div class="p-4 text-center bg-light rounded-3 my-2">
+                        <i class="bi bi-check2-circle fs-3 text-success"></i>
+                        <p class="small text-muted mb-0 mt-1">No existen hitos pendientes ni vencidos.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="pt-3 mt-3 border-top d-flex justify-content-between align-items-center small text-muted">
+                <span>Persistencia: <strong>Activa</strong></span>
+                <span>Perfil: <strong>{% if es_admin %}Administrador{% else %}Visualizador (Solo Lectura){% endif %}</strong></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <span class="label-tecnico">EXPEDIENTES DE OBRAS Y CONTROL DE COSTOS INDIVIDUAL</span>
+    <span class="small text-muted">Cálculo automático: Presupuesto − Materiales − Mano de Obra</span>
+</div>
+
+{% for p in proyectos %}
+<div class="ficha-obra {% if p.saldo_disponible < 0 %}alerta-critica{% endif %}">
+    <div class="row align-items-center g-3">
+        <div class="col-lg-4">
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge bg-dark">OBRA #{{ p.id }}</span>
+                <span class="text-muted small">Inicio: {{ p.fecha_inicio }}</span>
+            </div>
+            <h5 class="fw-bold mb-0 mt-1">{{ p.nombre }}</h5>
+        </div>
+
+        <div class="col-6 col-sm-3 col-lg-2">
+            <div class="label-tecnico">Presupuesto</div>
+            <div class="fw-bold cifra-monetaria">${{ p.presupuesto_inicial }}</div>
+        </div>
+
+        <div class="col-6 col-sm-3 col-lg-2">
+            <div class="label-tecnico">Materiales</div>
+            <div class="fw-semibold text-secondary cifra-monetaria">${{ p.total_materiales }}</div>
+        </div>
+
+        <div class="col-6 col-sm-3 col-lg-2">
+            <div class="label-tecnico">Mano de Obra</div>
+            <div class="fw-semibold text-secondary cifra-monetaria">${{ p.total_mano_obra }}</div>
+        </div>
+
+        <div class="col-6 col-sm-3 col-lg-2 text-lg-end">
+            <div class="label-tecnico">Saldo Restante</div>
+            <div class="fs-5 fw-bold cifra-monetaria {% if p.saldo_disponible < 0 %}text-danger{% else %}text-success{% endif %}">
+                ${{ p.saldo_disponible }}
+            </div>
+        </div>
+    </div>
+</div>
+{% empty %}
+<div class="bento-card text-center py-5">
+    <h6 class="fw-bold mt-2">Sin expedientes de obra registrados</h6>
+    <p class="text-muted small mb-3">Adjudica tu primera obra para activar el cálculo automático de saldos.</p>
+    {% if es_admin %}
+    <a href="{% url 'proyectos' %}" class="btn btn-obra btn-sm">Registrar Primera Obra</a>
+    {% endif %}
+</div>
+{% endfor %}
+{% endblock %}
