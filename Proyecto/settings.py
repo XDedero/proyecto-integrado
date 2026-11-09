@@ -75,10 +75,16 @@ WSGI_APPLICATION = 'Proyecto.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres.fywiwstpsexouahteddq',
+        'PASSWORD': 'Santarebeca715-',
+        'HOST': 'aws-0-us-east-1.pooler.supabase.com',
+        'PORT': '5432',
     }
 }
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 # Password validation
