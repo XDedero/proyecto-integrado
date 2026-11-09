@@ -4,8 +4,8 @@
 
 {% block content %}
 <div class="pb-3 mb-4 border-bottom" style="border-color: #d6d3c9 !important;">
-    <span class="label-tecnico">CONTROL PREVENTIVO DE VENCIMIENTOS (HU-08 Y HU-09)</span>
-    <h3 class="fw-bold mb-0 mt-1">Agenda de Hitos y Semáforo de Obras</h3>
+    <span class="label-tecnico">Administración / Calendario</span>
+    <h3 class="fw-bold mb-0 mt-1">Calendario de obras</h3>
 </div>
 
 <div class="row g-4">
@@ -16,8 +16,8 @@
             <form method="POST" action="{% url 'calendario' %}">
                 {% csrf_token %}
                 <div class="mb-3">
-                    <label class="form-label small fw-bold">Obra Asociada</label>
-                    <select name="proyecto_id" class="form-select" required>
+                    <label for="proyecto_id" class="form-label small fw-bold">Obra Asociada</label>
+                    <select id="proyecto_id" name="proyecto_id" class="form-select" required>
                         {% for p in proyectos %}
                             <option value="{{ p.id }}">{{ p.nombre }}</option>
                         {% endfor %}
@@ -41,7 +41,7 @@
 
     <div class="{% if es_admin %}col-lg-8{% else %}col-lg-12{% endif %}">
         <div class="bento-card">
-            <h5 class="fw-bold mb-3">Semáforo Automático de Entregas</h5>
+            <h5 class="fw-bold mb-3">Fechas y estado de entregas</h5>
             {% for h in hitos %}
             <div class="p-3 mb-3 rounded-3 border d-flex flex-wrap justify-content-between align-items-center
                 {% if h.color_alerta == 'rojo' %}border-danger bg-danger-subtle
