@@ -32,6 +32,42 @@ La autenticación usa **Django Auth**: las cuentas están en `public.auth_user` 
 
 ## Migraciones y puesta en marcha
 
+### Despliegue en Render
+
+Suba estos cambios al repositorio conectado a Render. Cree un **Web Service**
+con lenguaje **Python 3** y deje **Root Directory** vacío si `manage.py`
+está en la raíz del repositorio. Configure:
+
+| Campo | Valor |
+| --- | --- |
+| Build Command | `bash build.sh` |
+| Start Command | `gunicorn Proyecto.wsgi:application --bind 0.0.0.0:$PORT` |
+
+En **Environment**, añada `SECRET_KEY` (use **Generate**), `DEBUG=false` y
+las variables `DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_PORT` y
+`DB_SSLMODE` de su conexión actual a Supabase. Use el **Session pooler**,
+puerto `5432` y `DB_SSLMODE=require`. Copie los valores desde su `.env`
+al panel, sin subir ese archivo al repositorio.
+
+También puede crear un **Blueprint** desde el archivo `render.yaml`: solicita
+las credenciales de Supabase y genera la clave secreta automáticamente.
+No crea otra base de datos. `.python-version` selecciona Python 3.13.
+
+El build instala dependencias, recopila archivos estáticos y ejecuta las
+migraciones pendientes sobre la base configurada. Si ya usa esa base localmente,
+el despliegue comparte sus cuentas y registros. En Render se exige PostgreSQL
+para evitar guardar datos en un SQLite que se perdería al redesplegar.
+
+Render proporciona `RENDER_EXTERNAL_HOSTNAME`; Django permite ese dominio y
+configura HTTPS y cookies seguras automáticamente. Para un dominio propio,
+añada `ALLOWED_HOSTS=su-dominio.cl` y
+`CSRF_TRUSTED_ORIGINS=https://su-dominio.cl` (listas separadas por comas).
+Gunicorn sirve la aplicación y WhiteNoise sirve los archivos estáticos,
+incluidos los del administrador de Django.
+
+Referencias: [Django en Render](https://render.com/docs/deploy-django) y
+[servicios web](https://render.com/docs/web-services).
+
 La migración `0003_completar_perfiles_usuarios` crea los perfiles que falten para cuentas existentes. Las cuentas nuevas reciben su perfil automáticamente, incluidas las creadas mediante `createsuperuser` o el administrador de Django.
 
 ```powershell

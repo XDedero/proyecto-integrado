@@ -1,3 +1,5 @@
 Django>=5.2.17,<6.2
 python-dotenv>=1.2,<2
 psycopg2-binary>=2.9.10,<3
+gunicorn>=23,<24
+whitenoise>=6.9,<7

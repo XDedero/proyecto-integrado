@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: constructora-cl
+    runtime: python
+    plan: free
+    buildCommand: bash build.sh
+    startCommand: gunicorn Proyecto.wsgi:application --bind 0.0.0.0:$PORT
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "false"
+      - key: DB_HOST
+        sync: false
+      - key: DB_NAME
+        value: postgres
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_SSLMODE
+        value: require
