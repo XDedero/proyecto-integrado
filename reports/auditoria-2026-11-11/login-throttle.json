@@ -1,0 +1,14 @@
+﻿{
+  "environment": "isolated_sqlite",
+  "invalid_attempt_statuses": [
+    200,
+    200,
+    200,
+    200,
+    200,
+    200,
+    200
+  ],
+  "correct_password_after_attempts": 302,
+  "throttle_observed": false
+}

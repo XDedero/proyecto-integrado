@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils.html import format_html
 
-from .models import PerfilUsuario, Proyecto
+from .models import GastoMaterial, PerfilUsuario, Proyecto
 
 
 class EstiloFormulario:
@@ -21,6 +21,9 @@ class EstiloFormulario:
 
 
 class ProyectoForm(EstiloFormulario, forms.ModelForm):
+    presupuesto_inicial = forms.IntegerField(
+        label="Presupuesto inicial (CLP)", min_value=1, max_value=2147483647,
+    )
     class Meta:
         model = Proyecto
         fields = ["nombre", "presupuesto_inicial", "fecha_inicio", "activo"]
@@ -35,6 +38,56 @@ class ProyectoForm(EstiloFormulario, forms.ModelForm):
         if Proyecto.objects.filter(nombre__iexact=nombre).exclude(pk=self.instance.pk).exists():
             raise ValidationError("Ya existe una obra registrada con ese nombre.")
         return nombre
+
+
+class EgresoForm(EstiloFormulario, forms.Form):
+    tipo_egreso = forms.ChoiceField(choices=[("MATERIAL", "Compra de materiales"), ("MANO_OBRA", "Pago de mano de obra")])
+    proyecto_id = forms.ModelChoiceField(label="Obra asociada", queryset=Proyecto.objects.none())
+    monto = forms.IntegerField(label="Monto en CLP", min_value=1, max_value=2147483647)
+    fecha = forms.DateField(widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}))
+    proveedor = forms.CharField(max_length=100, required=False)
+    categoria = forms.ChoiceField(label="Categoría", choices=GastoMaterial.CATEGORIAS, required=False)
+    empleado_id = forms.ModelChoiceField(label="Empleado registrado", queryset=User.objects.none(), required=False)
+    trabajador = forms.CharField(label="Nombre del trabajador", max_length=100, required=False)
+    concepto = forms.CharField(label="Concepto", max_length=120, required=False, initial="Jornal / Avance de Obra")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["proyecto_id"].queryset = Proyecto.objects.filter(activo=True)
+        self.fields["empleado_id"].queryset = User.objects.filter(is_active=True, is_superuser=False, perfil__rol="EMPLEADO")
+        self.aplicar_estilos()
+        for nombre, campo in self.fields.items():
+            campo.widget.attrs["id"] = nombre
+        self.fields["tipo_egreso"].widget.attrs["onchange"] = "alternarCampos()"
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get("tipo_egreso") == "MATERIAL":
+            for campo in ("proveedor", "categoria"):
+                if not datos.get(campo) and campo not in self.errors:
+                    self.add_error(campo, "Este campo es obligatorio para una compra de materiales.")
+        elif datos.get("tipo_egreso") == "MANO_OBRA":
+            empleado = datos.get("empleado_id")
+            if not datos.get("trabajador"):
+                if empleado:
+                    datos["trabajador"] = empleado.first_name or empleado.username
+                    if len(datos["trabajador"]) > 100:
+                        self.add_error("trabajador", "Escriba un nombre de trabajador de hasta 100 caracteres.")
+                elif "empleado_id" not in self.errors:
+                    self.add_error("trabajador", "Seleccione un empleado o escriba el nombre del trabajador.")
+            datos["concepto"] = datos.get("concepto") or "Jornal / Avance de Obra"
+        return datos
+
+
+class HitoForm(EstiloFormulario, forms.Form):
+    proyecto_id = forms.ModelChoiceField(label="Obra asociada", queryset=Proyecto.objects.none())
+    nombre = forms.CharField(label="Descripción del hito", max_length=120)
+    fecha = forms.DateField(label="Fecha límite", widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["proyecto_id"].queryset = Proyecto.objects.filter(activo=True)
+        self.aplicar_estilos()
 
 
 class UsuarioForm(EstiloFormulario, forms.ModelForm):

@@ -3,6 +3,7 @@ from django.urls import path
 from construApp import views
 
 urlpatterns = [
+    path("health/", views.health, name="health"),
     path("admin/", admin.site.urls),
 
     # Rutas de Autenticación y Gestión de Roles (Admin, Visualizador, Empleado)

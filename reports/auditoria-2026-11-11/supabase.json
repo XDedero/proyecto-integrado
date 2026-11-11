@@ -1,0 +1,217 @@
+﻿{
+  "transaction_read_only": "on",
+  "expected_tables": 15,
+  "passed": true,
+  "results": [
+    {
+      "table": "auth_group",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_group",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_group_permissions",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_group_permissions",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_permission",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_permission",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_user",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_user",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_user_groups",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_user_groups",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_user_user_permissions",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "auth_user_user_permissions",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_gastomaterial",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_gastomaterial",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_hitocalendario",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_hitocalendario",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_pagomanoobra",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_pagomanoobra",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_perfilusuario",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_perfilusuario",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_proyecto",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "construApp_proyecto",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "django_admin_log",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "django_admin_log",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "django_content_type",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "django_content_type",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "django_migrations",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "django_migrations",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "django_session",
+      "rls": true,
+      "role": "anon",
+      "table_privileges": false,
+      "column_privileges": false
+    },
+    {
+      "table": "django_session",
+      "rls": true,
+      "role": "authenticated",
+      "table_privileges": false,
+      "column_privileges": false
+    }
+  ]
+}

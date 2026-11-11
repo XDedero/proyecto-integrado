@@ -1,0 +1,264 @@
+﻿[
+  {
+    "path": "/login/",
+    "method": "GET",
+    "status": 200,
+    "headers": {
+      "Location": null,
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {
+      "csrftoken": {
+        "secure": true,
+        "httponly": false,
+        "samesite": "Lax"
+      }
+    },
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/",
+    "method": "GET",
+    "status": 302,
+    "headers": {
+      "Location": "/login/?next=/",
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/proyectos/",
+    "method": "GET",
+    "status": 302,
+    "headers": {
+      "Location": "/login/?next=/proyectos/",
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/proyectos/6/eliminar/",
+    "method": "GET",
+    "status": 302,
+    "headers": {
+      "Location": "/login/?next=/proyectos/6/eliminar/",
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/usuarios/",
+    "method": "GET",
+    "status": 302,
+    "headers": {
+      "Location": "/login/?next=/usuarios/",
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/finanzas/",
+    "method": "GET",
+    "status": 302,
+    "headers": {
+      "Location": "/login/?next=/finanzas/",
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/calendario/",
+    "method": "GET",
+    "status": 302,
+    "headers": {
+      "Location": "/login/?next=/calendario/",
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/mi-portal/",
+    "method": "GET",
+    "status": 302,
+    "headers": {
+      "Location": "/login/?next=/mi-portal/",
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/admin/",
+    "method": "GET",
+    "status": 302,
+    "headers": {
+      "Location": "/admin/login/?next=/admin/",
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": "max-age=0, no-cache, no-store, must-revalidate, private"
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/.env",
+    "method": "GET",
+    "status": 404,
+    "headers": {
+      "Location": null,
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/.git/config",
+    "method": "GET",
+    "status": 404,
+    "headers": {
+      "Location": null,
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/db.sqlite3",
+    "method": "GET",
+    "status": 404,
+    "headers": {
+      "Location": null,
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/auditoria-ruta-inexistente/",
+    "method": "GET",
+    "status": 404,
+    "headers": {
+      "Location": null,
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/static/admin/css/base.css",
+    "method": "GET",
+    "status": 200,
+    "headers": {
+      "Location": null,
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": null,
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": "max-age=60, public"
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/login/",
+    "method": "POST",
+    "status": 403,
+    "headers": {
+      "Location": null,
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  },
+  {
+    "path": "/finanzas/",
+    "method": "POST",
+    "status": 403,
+    "headers": {
+      "Location": null,
+      "Strict-Transport-Security": "max-age=3600",
+      "X-Frame-Options": "DENY",
+      "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "same-origin",
+      "Cache-Control": null
+    },
+    "cookie_flags": {},
+    "traceback_exposed": false,
+    "sqlite_exposed": false
+  }
+]

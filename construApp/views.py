@@ -1,20 +1,38 @@
+import os
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.db import IntegrityError, transaction
-from django.views.decorators.http import require_http_methods, require_POST
-from .forms import ProyectoForm, UsuarioForm
+from django.db import DatabaseError, IntegrityError, connection, transaction
+from django.http import Http404, JsonResponse
+from django.views.decorators.http import require_http_methods, require_POST, require_safe
+from .forms import EgresoForm, HitoForm, ProyectoForm, UsuarioForm
 from .models import Proyecto, GastoMaterial, PagoManoObra, HitoCalendario
 from .permisos import obtener_rol_usuario, proyectos_visibles, solo_administrador
+
+
+@require_safe
+def health(request):
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+    except DatabaseError:
+        return JsonResponse({"status": "error", "database": "unavailable"}, status=503)
+    return JsonResponse({
+        "status": "ok", "database": "ok",
+        "revision": os.getenv("RENDER_GIT_COMMIT", "local"),
+    })
 
 
 # ==============================================================================
 # 1. AUTENTICACIÓN Y REDIRECCIÓN INTELIGENTE SEGÚN ROL (ADMIN / VIS / EMPLEADO)
 # ==============================================================================
 
+@require_http_methods(["GET", "POST"])
 def iniciar_sesion(request):
     """Valida credenciales y redirige al Panel o a la página aparte del Empleado (HU-01)."""
     if request.user.is_authenticated:
@@ -51,6 +69,7 @@ def cerrar_sesion(request):
 # ==============================================================================
 
 @login_required(login_url="login")
+@require_http_methods(["GET"])
 def portal_empleado(request):
     """Página exclusiva donde el trabajador ve su ficha, obra, hitos y sus propios pagos."""
     perfil = getattr(request.user, "perfil", None)
@@ -84,6 +103,7 @@ def portal_empleado(request):
 # ==============================================================================
 
 @login_required(login_url="login")
+@require_http_methods(["GET"])
 def inicio(request):
     """Dashboard principal estilo Bento para Administrador y Visualizador (HU-07 y HU-10)."""
     rol = obtener_rol_usuario(request.user)
@@ -175,6 +195,7 @@ def proyecto_eliminar(request, pk):
 
 
 @login_required(login_url="login")
+@require_http_methods(["GET", "POST"])
 def finanzas_view(request):
     """Libro de Finanzas para registrar Materiales (HU-05) y Mano de Obra (HU-06)."""
     rol = obtener_rol_usuario(request.user)
@@ -185,46 +206,26 @@ def finanzas_view(request):
 
     es_admin = (rol == "ADMIN")
 
-    if request.method == "POST":
-        tipo_egreso = request.POST.get("tipo_egreso", "MATERIAL")
-        proyecto_id = request.POST.get("proyecto_id")
-        monto = int(request.POST.get("monto", 0) or 0)
-        fecha = request.POST.get("fecha")
-        proyecto_obj = Proyecto.objects.filter(id=proyecto_id).first()
-
-        if not proyecto_obj or monto <= 0:
-            messages.error(request, "Verifique la obra seleccionada y que el monto sea mayor a 0.")
-        elif tipo_egreso == "MATERIAL":
-            proveedor = request.POST.get("proveedor", "").strip()
-            categoria = request.POST.get("categoria", "OTROS")
-            GastoMaterial.objects.create(
-                proyecto=proyecto_obj,
-                fecha=fecha,
-                proveedor=proveedor,
-                categoria=categoria,
-                monto=monto,
-            )
-            messages.success(request, f"Factura de '{proveedor}' registrada. Saldo actualizado.")
+    form = EgresoForm(request.POST if request.method == "POST" else None)
+    if request.method == "POST" and form.is_valid():
+        datos = form.cleaned_data
+        try:
+            with transaction.atomic():
+                if datos["tipo_egreso"] == "MATERIAL":
+                    GastoMaterial.objects.create(
+                        proyecto=datos["proyecto_id"], fecha=datos["fecha"],
+                        proveedor=datos["proveedor"], categoria=datos["categoria"], monto=datos["monto"],
+                    )
+                else:
+                    PagoManoObra.objects.create(
+                        proyecto=datos["proyecto_id"], fecha=datos["fecha"], monto=datos["monto"],
+                        empleado=datos.get("empleado_id"), trabajador=datos["trabajador"], concepto=datos["concepto"],
+                    )
+        except IntegrityError:
+            form.add_error(None, "No se pudo guardar el egreso. Actualice la página y revise la obra y el empleado.")
         else:
-            empleado_id = request.POST.get("empleado_id")
-            trabajador_nombre = request.POST.get("trabajador", "").strip()
-            concepto = request.POST.get("concepto", "Jornal / Avance de Obra").strip()
-            empleado_obj = User.objects.filter(id=empleado_id).first() if empleado_id else None
-
-            if empleado_obj and not trabajador_nombre:
-                trabajador_nombre = empleado_obj.first_name or empleado_obj.username
-
-            PagoManoObra.objects.create(
-                proyecto=proyecto_obj,
-                empleado=empleado_obj,
-                trabajador=trabajador_nombre,
-                concepto=concepto,
-                monto=monto,
-                fecha=fecha,
-            )
-            messages.success(request, f"Pago a '{trabajador_nombre}' registrado correctamente.")
-
-        return redirect("finanzas")
+            messages.success(request, "Egreso registrado correctamente. Saldo actualizado.")
+            return redirect("finanzas")
 
     proyectos = Proyecto.objects.filter(activo=True)
     empleados = User.objects.filter(perfil__rol="EMPLEADO")
@@ -232,6 +233,7 @@ def finanzas_view(request):
     pagos_mano_obra = PagoManoObra.objects.select_related("proyecto", "empleado").all()
 
     contexto = {
+        "form": form,
         "es_admin": es_admin,
         "proyectos": proyectos,
         "empleados": empleados,
@@ -242,6 +244,7 @@ def finanzas_view(request):
 
 
 @login_required(login_url="login")
+@require_http_methods(["GET", "POST"])
 def calendario_view(request):
     """Gestión de hitos y semáforo automático en rojo, amarillo y verde (HU-08 y HU-09)."""
     rol = obtener_rol_usuario(request.user)
@@ -252,20 +255,22 @@ def calendario_view(request):
 
     es_admin = (rol == "ADMIN")
 
-    if request.method == "POST" and es_admin:
-        proyecto_id = request.POST.get("proyecto_id")
-        nombre = request.POST.get("nombre", "").strip()
-        fecha = request.POST.get("fecha")
-        proyecto_obj = Proyecto.objects.filter(id=proyecto_id).first()
-
-        if proyecto_obj and nombre and fecha:
-            HitoCalendario.objects.create(proyecto=proyecto_obj, nombre=nombre, fecha=fecha)
-            messages.success(request, f"Hito '{nombre}' programado en el calendario.")
+    form = HitoForm(request.POST if request.method == "POST" else None)
+    if request.method == "POST" and form.is_valid():
+        datos = form.cleaned_data
+        try:
+            with transaction.atomic():
+                HitoCalendario.objects.create(proyecto=datos["proyecto_id"], nombre=datos["nombre"], fecha=datos["fecha"])
+        except IntegrityError:
+            form.add_error(None, "No se pudo guardar el hito. Actualice la página y revise la obra.")
+        else:
+            messages.success(request, "Hito programado correctamente.")
             return redirect("calendario")
 
     proyectos = Proyecto.objects.filter(activo=True)
     hitos = HitoCalendario.objects.select_related("proyecto").all()
     return render(request, "paginas/calendario.html", {
+        "form": form,
         "es_admin": es_admin,
         "proyectos": proyectos,
         "hitos": hitos,
@@ -329,7 +334,11 @@ def usuario_editar(request, pk):
 @solo_administrador
 @require_http_methods(["GET", "POST"])
 def usuario_eliminar(request, pk):
-    usuario = usuario_gestionable(request, pk)
+    try:
+        usuario = usuario_gestionable(request, pk)
+    except Http404:
+        messages.info(request, "El usuario no existe o ya fue eliminado.")
+        return redirect("registro_usuario")
     if usuario.pk == request.user.pk:
         raise PermissionDenied("No puede eliminar su propia cuenta de administrador.")
     if request.method == "POST":

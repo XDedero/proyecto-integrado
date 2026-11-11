@@ -317,6 +317,53 @@ class GestionTests(TestCase):
         self.assertIsNone(pago.empleado)
         self.assertEqual(pago.trabajador, "Pedro")
 
+    def test_eliminar_usuario_inexistente_vuelve_al_listado_con_aviso(self):
+        self.client.force_login(self.admin)
+        url = reverse("usuario_eliminar", args=[9999999])
+        with self.settings(DEBUG=False):
+            for metodo in (self.client.get, self.client.post):
+                with self.subTest(metodo=metodo.__name__):
+                    respuesta = metodo(url, follow=True)
+                    self.assertRedirects(respuesta, reverse("registro_usuario"))
+                    self.assertContains(respuesta, "El usuario no existe o ya fue eliminado.")
+        self.assertEqual(User.objects.count(), 5)
+
+    def test_repetir_eliminacion_usuario_conserva_otras_cuentas_y_pagos(self):
+        self.client.force_login(self.admin)
+        pago = PagoManoObra.objects.create(proyecto=self.proyecto, empleado=self.empleado, trabajador="Pedro", monto=1000, fecha=date.today())
+        url = reverse("usuario_eliminar", args=[self.empleado.pk])
+        self.assertRedirects(self.client.post(url), reverse("registro_usuario"))
+        for metodo in (self.client.get, self.client.post):
+            with self.subTest(metodo=metodo.__name__):
+                self.assertRedirects(metodo(url), reverse("registro_usuario"))
+        self.assertFalse(User.objects.filter(pk=self.empleado.pk).exists())
+        self.assertTrue(User.objects.filter(pk=self.otro_empleado.pk).exists())
+        pago.refresh_from_db()
+        self.assertIsNone(pago.empleado_id)
+        self.assertEqual(pago.trabajador, "Pedro")
+
+    def test_eliminar_usuario_inexistente_conserva_permisos_y_csrf(self):
+        url = reverse("usuario_eliminar", args=[9999999])
+        for metodo in (self.client.get, self.client.post):
+            self.assertRedirects(metodo(url), reverse("login") + "?next=" + url)
+        for usuario in (self.visualizador, self.empleado):
+            self.client.force_login(usuario)
+            for metodo in (self.client.get, self.client.post):
+                with self.subTest(usuario=usuario.username, metodo=metodo.__name__):
+                    self.assertEqual(metodo(url).status_code, 403)
+        cliente = Client(enforce_csrf_checks=True)
+        cliente.force_login(self.admin)
+        self.assertEqual(cliente.post(url).status_code, 403)
+
+    def test_eliminacion_usuario_conserva_bloqueo_de_cuenta_propia_y_superusuario(self):
+        self.client.force_login(self.admin)
+        for usuario in (self.admin, self.superusuario):
+            url = reverse("usuario_eliminar", args=[usuario.pk])
+            for metodo in (self.client.get, self.client.post):
+                with self.subTest(usuario=usuario.username, metodo=metodo.__name__):
+                    self.assertEqual(metodo(url).status_code, 403)
+            self.assertTrue(User.objects.filter(pk=usuario.pk).exists())
+
     def test_solo_admin_accede_al_crud_de_usuarios(self):
         rutas = [reverse("registro_usuario"), reverse("usuario_detalle", args=[self.otro_empleado.pk]), reverse("usuario_editar", args=[self.otro_empleado.pk]), reverse("usuario_eliminar", args=[self.otro_empleado.pk])]
         for usuario in (self.visualizador, self.empleado):

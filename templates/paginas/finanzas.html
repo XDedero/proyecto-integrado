@@ -16,39 +16,26 @@
             <h5 class="fw-bold mb-3">Registrar gasto o pago</h5>
             <form method="POST" action="{% url 'finanzas' %}">
                 {% csrf_token %}
+                {% include "includes/form_errores.html" %}
                 <div class="mb-3">
                     <label for="proyecto_id" class="form-label small fw-bold">1. Obra Asociada</label>
-                    <select id="proyecto_id" name="proyecto_id" class="form-select" required>
-                        {% for p in proyectos %}
-                            <option value="{{ p.id }}">{{ p.nombre }} (Saldo: ${{ p.saldo_disponible }})</option>
-                        {% endfor %}
-                    </select>
+                    {{ form.proyecto_id }}
                 </div>
 
                 <div class="mb-3">
                     <label for="tipo_egreso" class="form-label small fw-bold">2. Tipo de Egreso</label>
-                    <select id="tipo_egreso" name="tipo_egreso" class="form-select" onchange="alternarCampos()" required>
-                        <option value="MATERIAL">Compra de Materiales (Factura / Boleta)</option>
-                        <option value="MANO_OBRA">Pago de Mano de Obra (Jornal / Sueldo Empleado)</option>
-                    </select>
+                    {{ form.tipo_egreso }}
                 </div>
 
                 <!-- Campos para Materiales -->
                 <div id="bloque_materiales">
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Proveedor</label>
-                        <input type="text" name="proveedor" class="form-control" placeholder="Ej: Ferretería Los Ríos">
+                        {{ form.proveedor }}
                     </div>
                     <div class="mb-3">
                         <label for="categoria" class="form-label small fw-bold">Categoría de Material</label>
-                        <select id="categoria" name="categoria" class="form-select">
-                            <option value="MADERA">Madera y Tableros</option>
-                            <option value="FIERRO">Fierro y Estructuras</option>
-                            <option value="CEMENTO">Cemento, Áridos y Hormigón</option>
-                            <option value="TERMINACIONES">Pintura y Terminaciones</option>
-                            <option value="HERRAMIENTAS">Herramientas e Insumos</option>
-                            <option value="OTROS">Otros Materiales</option>
-                        </select>
+                        {{ form.categoria }}
                     </div>
                 </div>
 
@@ -56,31 +43,26 @@
                 <div id="bloque_mano_obra" style="display: none;">
                     <div class="mb-3">
                         <label for="empleado_id" class="form-label small fw-bold">Empleado registrado</label>
-                        <select id="empleado_id" name="empleado_id" class="form-select">
-                            <option value="">— Seleccionar cuenta de trabajador —</option>
-                            {% for emp in empleados %}
-                                <option value="{{ emp.id }}">{{ emp.first_name|default:emp.username }} ({{ emp.username }})</option>
-                            {% endfor %}
-                        </select>
+                        {{ form.empleado_id }}
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">O escribir nombre del trabajador</label>
-                        <input type="text" name="trabajador" class="form-control" placeholder="Ej: Juan Carlos Muñoz">
+                        {{ form.trabajador }}
                     </div>
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Labor o Concepto del Pago</label>
-                        <input type="text" name="concepto" class="form-control" value="Quincena Jornales / Avance Trato">
+                        {{ form.concepto }}
                     </div>
                 </div>
 
                 <div class="row g-2 mb-4">
                     <div class="col-7">
                         <label class="form-label small fw-bold">Monto en CLP</label>
-                        <input type="number" name="monto" class="form-control" min="1" placeholder="Ej: 450000" required>
+                        {{ form.monto }}
                     </div>
                     <div class="col-5">
                         <label class="form-label small fw-bold">Fecha</label>
-                        <input type="date" name="fecha" class="form-control" required>
+                        {{ form.fecha }}
                     </div>
                 </div>
 
@@ -158,9 +140,12 @@
 
 <script>
 function alternarCampos() {
-    const tipo = document.getElementById("tipo_egreso").value;
+    const selector = document.getElementById("tipo_egreso");
+    if (!selector) return;
+    const tipo = selector.value;
     document.getElementById("bloque_materiales").style.display = (tipo === "MATERIAL") ? "block" : "none";
     document.getElementById("bloque_mano_obra").style.display = (tipo === "MANO_OBRA") ? "block" : "none";
 }
+alternarCampos();
 </script>
 {% endblock %}

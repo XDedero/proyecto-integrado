@@ -1,0 +1,11 @@
+{% if form.errors %}
+<div class="alert alert-danger" role="alert">
+    <p>Revise los datos antes de guardar:</p>
+    {{ form.non_field_errors }}
+    <ul class="mb-0">
+    {% for field in form %}{% for error in field.errors %}
+        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+    {% endfor %}{% endfor %}
+    </ul>
+</div>
+{% endif %}

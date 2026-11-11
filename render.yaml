@@ -5,6 +5,7 @@ services:
     plan: free
     buildCommand: bash build.sh
     startCommand: gunicorn Proyecto.wsgi:application --bind 0.0.0.0:$PORT
+    healthCheckPath: /health/
     envVars:
       - key: SECRET_KEY
         generateValue: true
