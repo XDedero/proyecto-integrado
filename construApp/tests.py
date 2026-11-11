@@ -110,6 +110,35 @@ class GestionTests(TestCase):
         self.empleado.perfil.refresh_from_db()
         self.assertIsNone(self.empleado.perfil.obra_asignada)
 
+    def test_eliminar_proyecto_inexistente_vuelve_al_listado_con_aviso(self):
+        self.client.force_login(self.admin)
+        url = reverse("proyecto_eliminar", args=[9999999])
+        with self.settings(DEBUG=False):
+            for metodo in (self.client.get, self.client.post):
+                with self.subTest(metodo=metodo.__name__):
+                    respuesta = metodo(url, follow=True)
+                    self.assertRedirects(respuesta, reverse("proyectos"))
+                    self.assertContains(respuesta, "El proyecto no existe o ya fue eliminado.")
+        self.assertEqual(Proyecto.objects.count(), 2)
+
+    def test_repetir_eliminacion_no_devuelve_404_ni_borra_otro_proyecto(self):
+        self.client.force_login(self.admin)
+        url = reverse("proyecto_eliminar", args=[self.proyecto.pk])
+        self.assertRedirects(self.client.post(url), reverse("proyectos"))
+        for metodo in (self.client.get, self.client.post):
+            with self.subTest(metodo=metodo.__name__):
+                self.assertRedirects(metodo(url), reverse("proyectos"))
+        self.assertTrue(Proyecto.objects.filter(pk=self.otro_proyecto.pk).exists())
+
+    def test_eliminar_proyecto_inexistente_conserva_control_de_acceso(self):
+        url = reverse("proyecto_eliminar", args=[9999999])
+        self.assertRedirects(self.client.get(url), reverse("login") + "?next=" + url)
+        for usuario in (self.visualizador, self.empleado):
+            self.client.force_login(usuario)
+            for metodo in (self.client.get, self.client.post):
+                with self.subTest(usuario=usuario.username, metodo=metodo.__name__):
+                    self.assertEqual(metodo(url).status_code, 403)
+
     def test_visualizador_ve_proyectos_sin_acciones_de_escritura(self):
         self.client.force_login(self.visualizador)
         respuesta = self.client.get(reverse("proyectos"))

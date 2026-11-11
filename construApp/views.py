@@ -161,7 +161,10 @@ def proyecto_editar(request, pk):
 @solo_administrador
 @require_http_methods(["GET", "POST"])
 def proyecto_eliminar(request, pk):
-    proyecto = get_object_or_404(Proyecto, pk=pk)
+    proyecto = Proyecto.objects.filter(pk=pk).first()
+    if proyecto is None:
+        messages.info(request, "El proyecto no existe o ya fue eliminado.")
+        return redirect("proyectos")
     if request.method == "POST":
         nombre = proyecto.nombre
         with transaction.atomic():
