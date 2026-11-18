@@ -7,10 +7,11 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import DatabaseError, IntegrityError, connection, transaction
+from django.db.models import Count, Q, Sum
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST, require_safe
-from .forms import EgresoForm, HitoForm, ProyectoForm, UsuarioForm
-from .models import Proyecto, GastoMaterial, PagoManoObra, HitoCalendario
+from .forms import ClienteForm, EgresoForm, HitoForm, ProyectoForm, UsuarioForm
+from .models import Cliente, Proyecto, GastoMaterial, PagoManoObra, HitoCalendario
 from .permisos import obtener_rol_usuario, proyectos_visibles, solo_administrador
 
 
@@ -135,7 +136,7 @@ def proyectos_view(request):
     rol = obtener_rol_usuario(request.user)
     if request.method == "POST" and rol != "ADMIN":
         raise PermissionDenied("Solo el administrador puede crear proyectos.")
-    form = ProyectoForm(request.POST if request.method == "POST" else None)
+    form = ProyectoForm(request.POST if request.method == "POST" else None, initial={"cliente": request.GET.get("cliente")})
     if request.method == "POST" and form.is_valid():
         try:
             with transaction.atomic():
@@ -146,14 +147,14 @@ def proyectos_view(request):
             messages.success(request, f"Obra '{proyecto.nombre}' creada correctamente.")
             return redirect("proyectos")
     return render(request, "paginas/proyectos.html", {
-        "proyectos": proyectos_visibles(request.user), "form": form,
+        "proyectos": proyectos_visibles(request.user).select_related("cliente"), "form": form,
     })
 
 
 @login_required(login_url="login")
 @require_http_methods(["GET"])
 def proyecto_detalle(request, pk):
-    proyecto = get_object_or_404(proyectos_visibles(request.user), pk=pk)
+    proyecto = get_object_or_404(proyectos_visibles(request.user).select_related("cliente"), pk=pk)
     return render(request, "paginas/proyecto_detalle.html", {
         "proyecto": proyecto,
         "personal": proyecto.trabajadores_asignados.select_related("usuario"),
@@ -196,6 +197,62 @@ def proyecto_eliminar(request, pk):
 
 @login_required(login_url="login")
 @require_http_methods(["GET", "POST"])
+def clientes_view(request):
+    rol = obtener_rol_usuario(request.user)
+    if rol not in ("ADMIN", "VISUALIZADOR") or (request.method == "POST" and rol != "ADMIN"):
+        raise PermissionDenied("No tiene permisos para gestionar clientes.")
+    form = ClienteForm(request.POST if request.method == "POST" else None)
+    if request.method == "POST" and form.is_valid():
+        try:
+            with transaction.atomic():
+                cliente = form.save()
+        except IntegrityError:
+            form.add_error("rut", "Ya existe un cliente con ese RUT.")
+        else:
+            messages.success(request, f"Cliente '{cliente.nombre}' registrado correctamente.")
+            return redirect("cliente_detalle", pk=cliente.pk)
+    busqueda = request.GET.get("q", "").strip()
+    clientes = Cliente.objects.annotate(cantidad_proyectos=Count("proyectos"), presupuesto_acumulado=Sum("proyectos__presupuesto_inicial"))
+    if busqueda:
+        clientes = clientes.filter(Q(nombre__icontains=busqueda) | Q(rut__icontains=busqueda) | Q(email__icontains=busqueda))
+    return render(request, "paginas/clientes.html", {"form": form, "clientes": clientes, "busqueda": busqueda})
+
+
+@login_required(login_url="login")
+@require_http_methods(["GET"])
+def cliente_detalle(request, pk):
+    if obtener_rol_usuario(request.user) not in ("ADMIN", "VISUALIZADOR"):
+        raise PermissionDenied("No tiene permisos para consultar el historial de clientes.")
+    cliente = get_object_or_404(Cliente, pk=pk)
+    proyectos = cliente.proyectos.all()
+    resumen = proyectos.aggregate(presupuesto=Sum("presupuesto_inicial"), cantidad=Count("pk"), activas=Count("pk", filter=Q(activo=True)))
+    materiales = GastoMaterial.objects.filter(proyecto__cliente=cliente).aggregate(total=Sum("monto"))["total"] or 0
+    mano_obra = PagoManoObra.objects.filter(proyecto__cliente=cliente).aggregate(total=Sum("monto"))["total"] or 0
+    return render(request, "paginas/cliente_detalle.html", {
+        "cliente": cliente, "proyectos": proyectos, "resumen": resumen,
+        "gastos": materiales + mano_obra, "saldo": (resumen["presupuesto"] or 0) - materiales - mano_obra,
+    })
+
+
+@solo_administrador
+@require_http_methods(["GET", "POST"])
+def cliente_editar(request, pk):
+    cliente = get_object_or_404(Cliente, pk=pk)
+    form = ClienteForm(request.POST if request.method == "POST" else None, instance=cliente)
+    if request.method == "POST" and form.is_valid():
+        try:
+            with transaction.atomic():
+                form.save()
+        except IntegrityError:
+            form.add_error("rut", "Ya existe un cliente con ese RUT.")
+        else:
+            messages.success(request, "Cliente actualizado correctamente.")
+            return redirect("cliente_detalle", pk=cliente.pk)
+    return render(request, "paginas/cliente_form.html", {"form": form, "cliente": cliente})
+
+
+@login_required(login_url="login")
+@require_http_methods(["GET", "POST"])
 def finanzas_view(request):
     """Libro de Finanzas para registrar Materiales (HU-05) y Mano de Obra (HU-06)."""
     rol = obtener_rol_usuario(request.user)
@@ -208,19 +265,8 @@ def finanzas_view(request):
 
     form = EgresoForm(request.POST if request.method == "POST" else None)
     if request.method == "POST" and form.is_valid():
-        datos = form.cleaned_data
         try:
-            with transaction.atomic():
-                if datos["tipo_egreso"] == "MATERIAL":
-                    GastoMaterial.objects.create(
-                        proyecto=datos["proyecto_id"], fecha=datos["fecha"],
-                        proveedor=datos["proveedor"], categoria=datos["categoria"], monto=datos["monto"],
-                    )
-                else:
-                    PagoManoObra.objects.create(
-                        proyecto=datos["proyecto_id"], fecha=datos["fecha"], monto=datos["monto"],
-                        empleado=datos.get("empleado_id"), trabajador=datos["trabajador"], concepto=datos["concepto"],
-                    )
+            form.save()
         except IntegrityError:
             form.add_error(None, "No se pudo guardar el egreso. Actualice la página y revise la obra y el empleado.")
         else:
@@ -241,6 +287,47 @@ def finanzas_view(request):
         "pagos_mano_obra": pagos_mano_obra,
     }
     return render(request, "paginas/finanzas.html", contexto)
+
+
+def obtener_egreso(tipo, pk):
+    modelo = {"material": GastoMaterial, "mano-obra": PagoManoObra}.get(tipo)
+    if modelo is None:
+        raise Http404("Tipo de egreso desconocido.")
+    return get_object_or_404(modelo.objects.select_related("proyecto"), pk=pk)
+
+
+@solo_administrador
+@require_http_methods(["GET", "POST"])
+def egreso_editar(request, tipo, pk):
+    egreso = obtener_egreso(tipo, pk)
+    form = EgresoForm(request.POST if request.method == "POST" else None, instance=egreso)
+    if request.method == "POST" and form.is_valid():
+        try:
+            form.save()
+        except DatabaseError:
+            form.add_error(None, "No se pudo actualizar el egreso. Compruebe que el registro, la obra y el empleado siguen disponibles.")
+        else:
+            messages.success(request, "Egreso actualizado correctamente. Saldos y pagos recalculados.")
+            return redirect("finanzas")
+    return render(request, "paginas/egreso_form.html", {"form": form, "egreso": egreso, "tipo": tipo})
+
+
+@solo_administrador
+@require_http_methods(["GET", "POST"])
+def egreso_eliminar(request, tipo, pk):
+    try:
+        egreso = obtener_egreso(tipo, pk)
+    except Http404:
+        if tipo not in ("material", "mano-obra"):
+            raise
+        messages.info(request, "El egreso no existe o ya fue eliminado.")
+        return redirect("finanzas")
+    if request.method == "POST":
+        with transaction.atomic():
+            egreso.delete()
+        messages.success(request, "Egreso eliminado correctamente. Saldos y pagos recalculados.")
+        return redirect("finanzas")
+    return render(request, "paginas/egreso_eliminar.html", {"egreso": egreso, "tipo": tipo})
 
 
 @login_required(login_url="login")

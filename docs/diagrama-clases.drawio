@@ -1,0 +1,553 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mxfile host="app.diagrams.net" type="device" version="24.7.17">
+  <diagram name="1. Modelo de dominio" id="pagina-1">
+    <mxGraphModel dx="1800" dy="1500" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1800" pageHeight="1550" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Cliente" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;Cliente&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: BigAutoField {PK; autogenerado}&lt;br&gt;+ nombre: CharField(150)&lt;br&gt;+ rut: CharField(20) {único; nullable}&lt;br&gt;+ telefono: CharField(30) {opcional}&lt;br&gt;+ email: CharField(254) {opcional}&lt;br&gt;+ direccion: CharField(255) {opcional}&lt;br&gt;+ notas: TextField {opcional}&lt;br&gt;+ creado_en: DateTimeField {auto_now_add}&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="30" y="80" width="390" height="267" as="geometry" />
+        </mxCell>
+        <mxCell id="Proyecto" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;Proyecto&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: BigAutoField {PK; autogenerado}&lt;br&gt;+ nombre: CharField(100) {único}&lt;br&gt;+ cliente: Cliente {FK; PROTECT; nullable}&lt;br&gt;+ direccion: CharField(255) {opcional}&lt;br&gt;+ comuna: CharField(100) {opcional}&lt;br&gt;+ region: CharField(100) {opcional}&lt;br&gt;+ descripcion: TextField {opcional}&lt;br&gt;+ tipo_obra: CharField(20) {opciones: CONSTRUCCION, REMODELACION, AMPLIACION, REPARACION, OTRO}&lt;br&gt;+ responsable: CharField(150) {opcional}&lt;br&gt;+ observaciones: TextField {opcional}&lt;br&gt;+ presupuesto_inicial: PositiveIntegerField&lt;br&gt;+ fecha_inicio: DateField&lt;br&gt;+ fecha_termino_estimada: DateField {nullable}&lt;br&gt;+ activo: BooleanField&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;+ clean(self)&lt;br&gt;+ /total_materiales {propiedad calculada}&lt;br&gt;+ /total_mano_obra {propiedad calculada}&lt;br&gt;+ /gasto_total {propiedad calculada}&lt;br&gt;+ /saldo_disponible {propiedad calculada}&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="530" y="80" width="500" height="495" as="geometry" />
+        </mxCell>
+        <mxCell id="User" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;User&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: AutoField {PK; autogenerado}&lt;br&gt;+ password: CharField(128)&lt;br&gt;+ last_login: DateTimeField {nullable}&lt;br&gt;+ is_superuser: BooleanField&lt;br&gt;+ username: CharField(150) {único}&lt;br&gt;+ first_name: CharField(150) {opcional}&lt;br&gt;+ last_name: CharField(150) {opcional}&lt;br&gt;+ email: CharField(254) {opcional}&lt;br&gt;+ is_staff: BooleanField&lt;br&gt;+ is_active: BooleanField&lt;br&gt;+ date_joined: DateTimeField&lt;br&gt;+ groups: Group[0..*] {M:N}&lt;br&gt;+ user_permissions: Permission[0..*] {M:N}&lt;br&gt;&lt;hr&gt;+ get_full_name(): str&lt;br&gt;+ get_short_name(): str&lt;br&gt;+ set_password(raw_password)&lt;br&gt;+ check_password(raw_password): bool&lt;br&gt;+ has_perm(perm, obj=None): bool&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="80" width="410" height="438" as="geometry" />
+        </mxCell>
+        <mxCell id="PerfilUsuario" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;PerfilUsuario&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: BigAutoField {PK; autogenerado}&lt;br&gt;+ usuario: User {único; FK; CASCADE}&lt;br&gt;+ rol: CharField(20) {opciones: ADMIN, VISUALIZADOR, EMPLEADO}&lt;br&gt;+ especialidad: CharField(80) {opcional}&lt;br&gt;+ obra_asignada: Proyecto {FK; SET_NULL; nullable}&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="620" width="410" height="229" as="geometry" />
+        </mxCell>
+        <mxCell id="GastoMaterial" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;GastoMaterial&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: BigAutoField {PK; autogenerado}&lt;br&gt;+ proyecto: Proyecto {FK; CASCADE}&lt;br&gt;+ fecha: DateField&lt;br&gt;+ proveedor: CharField(100)&lt;br&gt;+ categoria: CharField(30) {opciones: MADERA, FIERRO, CEMENTO, TERMINACIONES, HERRAMIENTAS, OTROS}&lt;br&gt;+ monto: PositiveIntegerField&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="30" y="1010" width="420" height="248" as="geometry" />
+        </mxCell>
+        <mxCell id="PagoManoObra" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;PagoManoObra&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: BigAutoField {PK; autogenerado}&lt;br&gt;+ proyecto: Proyecto {FK; CASCADE}&lt;br&gt;+ empleado: User {FK; SET_NULL; nullable}&lt;br&gt;+ trabajador: CharField(100)&lt;br&gt;+ concepto: CharField(120)&lt;br&gt;+ monto: PositiveIntegerField&lt;br&gt;+ fecha: DateField&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="550" y="1010" width="460" height="248" as="geometry" />
+        </mxCell>
+        <mxCell id="HitoCalendario" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;HitoCalendario&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: BigAutoField {PK; autogenerado}&lt;br&gt;+ proyecto: Proyecto {FK; CASCADE}&lt;br&gt;+ nombre: CharField(120)&lt;br&gt;+ fecha: DateField&lt;br&gt;+ completado: BooleanField&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;+ /dias_restantes {propiedad calculada}&lt;br&gt;+ /color_alerta {propiedad calculada}&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1250" y="1120" width="440" height="248" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-1" value="cliente / proyectos · PROTECT" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=1;exitY=0.35;entryX=0;entryY=0.2;" edge="1" parent="1" source="Cliente" target="Proyecto">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-1-inicio" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-1">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-1-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-1">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-2" value="usuario / perfil · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.6;exitY=1;entryX=0.6;entryY=0;" edge="1" parent="1" source="User" target="PerfilUsuario">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-2-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-2">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-2-fin" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-2">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-3" value="obra_asignada / trabajadores_asignados · SET_NULL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=1;exitY=0.65;entryX=0;entryY=0.3;" edge="1" parent="1" source="Proyecto" target="PerfilUsuario">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-3-inicio" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-3">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-3-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-3">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-4" value="proyecto / gastos_materiales · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.2;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="Proyecto" target="GastoMaterial">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="630" y="980" />
+              <mxPoint x="240" y="980" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-4-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-4">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-4-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-4">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-5" value="proyecto / pagos_mano_obra · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" edge="1" parent="1" source="Proyecto" target="PagoManoObra">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-5-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-5">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-5-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-5">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-6" value="proyecto / hitos · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=diamond;startFill=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=1;exitY=0.9;entryX=0;entryY=0.2;" edge="1" parent="1" source="Proyecto" target="HitoCalendario">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-6-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-6">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-6-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-6">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-7" value="empleado / pagos_recibidos · SET_NULL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0;exitY=0.6;entryX=1;entryY=0.3;" edge="1" parent="1" source="User" target="PagoManoObra">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-7-inicio" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-7">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-7-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-7">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="leyenda" value="UML · + público · / propiedad calculada&lt;br&gt;PK = clave primaria · FK = clave foránea&lt;br&gt;CASCADE elimina los registros dependientes.&lt;br&gt;SET_NULL conserva el registro sin su vínculo.&lt;br&gt;PROTECT impide borrar clientes con obras.&lt;br&gt;Los seis modelos de negocio heredan de django.db.models.Model; User hereda de AbstractUser." style="shape=note;whiteSpace=wrap;html=1;align=left;spacing=12;fontSize=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="30" y="520" width="390" height="180" as="geometry" />
+        </mxCell>
+        <mxCell id="reglas" value="Reglas de registro&lt;br&gt;Cliente, dirección, descripción y término estimado son obligatorios en ProyectoForm.&lt;br&gt;Las obras anteriores admiten cliente y término nulos hasta completar su ficha.&lt;br&gt;Término estimado ≥ inicio (modelo y base).&lt;br&gt;Presupuestos y montos ≥ 1 CLP.&lt;br&gt;Un cliente reúne todas sus obras, activas e inactivas.&lt;br&gt;El perfil se crea automáticamente al guardar User.&lt;br&gt;User es una cuenta; Cliente no requiere acceso." style="shape=note;whiteSpace=wrap;html=1;align=left;spacing=12;fontSize=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="30" y="730" width="390" height="240" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="2. Autenticación y tablas de Django" id="pagina-2">
+    <mxGraphModel dx="1800" dy="1500" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2000" pageHeight="1700" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="User" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;User&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: AutoField {PK; autogenerado}&lt;br&gt;+ password: CharField(128)&lt;br&gt;+ last_login: DateTimeField {nullable}&lt;br&gt;+ is_superuser: BooleanField&lt;br&gt;+ username: CharField(150) {único}&lt;br&gt;+ first_name: CharField(150) {opcional}&lt;br&gt;+ last_name: CharField(150) {opcional}&lt;br&gt;+ email: CharField(254) {opcional}&lt;br&gt;+ is_staff: BooleanField&lt;br&gt;+ is_active: BooleanField&lt;br&gt;+ date_joined: DateTimeField&lt;br&gt;+ groups: Group[0..*] {M:N}&lt;br&gt;+ user_permissions: Permission[0..*] {M:N}&lt;br&gt;&lt;hr&gt;+ get_full_name(): str&lt;br&gt;+ get_short_name(): str&lt;br&gt;+ set_password(raw_password)&lt;br&gt;+ check_password(raw_password): bool&lt;br&gt;+ has_perm(perm, obj=None): bool&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="450" height="438" as="geometry" />
+        </mxCell>
+        <mxCell id="Group" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;Group&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: AutoField {PK; autogenerado}&lt;br&gt;+ name: CharField(150) {único}&lt;br&gt;+ permissions: Permission[0..*] {M:N}&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;+ natural_key(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="740" y="80" width="450" height="191" as="geometry" />
+        </mxCell>
+        <mxCell id="Permission" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;Permission&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: AutoField {PK; autogenerado}&lt;br&gt;+ name: CharField(255)&lt;br&gt;+ content_type: ContentType {FK; CASCADE}&lt;br&gt;+ codename: CharField(100)&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;+ /user_perm_str {propiedad calculada}&lt;br&gt;+ natural_key(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1480" y="80" width="450" height="229" as="geometry" />
+        </mxCell>
+        <mxCell id="ContentType" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ContentType&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: AutoField {PK; autogenerado}&lt;br&gt;+ app_label: CharField(100)&lt;br&gt;+ model: CharField(100)&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;+ /name {propiedad calculada}&lt;br&gt;+ /app_labeled_name {propiedad calculada}&lt;br&gt;+ model_class(self)&lt;br&gt;+ get_object_for_this_type(self, using=None, **kwargs)&lt;br&gt;+ get_all_objects_for_this_type(self, **kwargs)&lt;br&gt;+ natural_key(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1480" y="700" width="450" height="286" as="geometry" />
+        </mxCell>
+        <mxCell id="LogEntry" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;LogEntry&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: AutoField {PK; autogenerado}&lt;br&gt;+ action_time: DateTimeField&lt;br&gt;+ user: User {FK; CASCADE}&lt;br&gt;+ content_type: ContentType {FK; SET_NULL; nullable}&lt;br&gt;+ object_id: TextField {nullable}&lt;br&gt;+ object_repr: CharField(200)&lt;br&gt;+ action_flag: PositiveSmallIntegerField {opciones: 1, 2, 3}&lt;br&gt;+ change_message: TextField {opcional}&lt;br&gt;&lt;hr&gt;+ __str__(self)&lt;br&gt;+ is_addition(self)&lt;br&gt;+ is_change(self)&lt;br&gt;+ is_deletion(self)&lt;br&gt;+ get_change_message(self)&lt;br&gt;+ get_edited_object(self)&lt;br&gt;+ get_admin_url(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1150" width="450" height="381" as="geometry" />
+        </mxCell>
+        <mxCell id="Session" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;Session&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ session_key: CharField(40) {PK}&lt;br&gt;+ session_data: TextField&lt;br&gt;+ expire_date: DateTimeField&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="740" y="1150" width="450" height="137" as="geometry" />
+        </mxCell>
+        <mxCell id="User_groups" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;User_groups&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: AutoField {PK; autogenerado}&lt;br&gt;+ user: User {FK; CASCADE}&lt;br&gt;+ group: Group {FK; CASCADE}&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="500" y="700" width="450" height="137" as="geometry" />
+        </mxCell>
+        <mxCell id="User_user_permissions" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;User_user_permissions&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: AutoField {PK; autogenerado}&lt;br&gt;+ user: User {FK; CASCADE}&lt;br&gt;+ permission: Permission {FK; CASCADE}&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="40" y="700" width="450" height="137" as="geometry" />
+        </mxCell>
+        <mxCell id="Group_permissions" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;Group_permissions&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ id: AutoField {PK; autogenerado}&lt;br&gt;+ group: Group {FK; CASCADE}&lt;br&gt;+ permission: Permission {FK; CASCADE}&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#dae8fc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="960" y="700" width="450" height="137" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-8" value="content_type · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.8;exitY=0;entryX=0.8;entryY=1;" edge="1" parent="1" source="ContentType" target="Permission">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-8-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-8">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-8-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-8">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-9" value="user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0;exitY=0.7;entryX=0;entryY=0.5;" edge="1" parent="1" source="User" target="LogEntry">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="20" y="400" />
+              <mxPoint x="20" y="1340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-9-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-9">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-9-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-9">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-10" value="content_type · SET_NULL" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.8;exitY=1;entryX=0.8;entryY=0;" edge="1" parent="1" source="ContentType" target="LogEntry">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1840" y="1060" />
+              <mxPoint x="400" y="1060" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-10-inicio" value="0..1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-10">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-10-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-10">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-11" value="user · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=1;exitY=0.5;entryX=0.25;entryY=0;" edge="1" parent="1" source="User" target="User_groups">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="300" />
+              <mxPoint x="600" y="650" />
+              <mxPoint x="612" y="650" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-11-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-11">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-11-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-11">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-12" value="group · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.2;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="Group" target="User_groups">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="830" y="580" />
+              <mxPoint x="838" y="580" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-12-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-12">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-12-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-12">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-13" value="user · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.3;exitY=1;entryX=0.3;entryY=0;" edge="1" parent="1" source="User" target="User_user_permissions">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-13-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-13">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-13-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-13">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-14" value="permission · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.2;exitY=1;entryX=0.7;entryY=0;" edge="1" parent="1" source="Permission" target="User_user_permissions">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1570" y="550" />
+              <mxPoint x="355" y="550" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-14-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-14">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-14-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-14">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-15" value="group · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.8;exitY=1;entryX=0.25;entryY=0;" edge="1" parent="1" source="Group" target="Group_permissions">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1100" y="600" />
+              <mxPoint x="1072" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-15-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-15">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-15-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-15">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-16" value="permission · CASCADE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=none;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.5;exitY=1;entryX=0.75;entryY=0;" edge="1" parent="1" source="Permission" target="Group_permissions">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1705" y="620" />
+              <mxPoint x="1298" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-16-inicio" value="1" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-16">
+          <mxGeometry x="-0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-16-fin" value="0..*" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;fontSize=12;labelBackgroundColor=#ffffff;" vertex="1" connectable="0" parent="relacion-16">
+          <mxGeometry x="0.85" y="-12" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="auth-nota" value="Las asociaciones M:N de User.groups, User.user_permissions y Group.permissions se detallan mediante sus tablas intermedias reales.&lt;br&gt;Session guarda la sesión codificada; no tiene FK a User.&lt;br&gt;LogEntry registra acciones del administrador de Django; no es una bitácora de todos los pagos de la aplicación.&lt;br&gt;User en esta página es la misma clase del modelo de dominio." style="shape=note;whiteSpace=wrap;html=1;align=left;spacing=12;fontSize=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1480" y="1200" width="450" height="190" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram name="3. Formularios y control de la aplicación" id="pagina-3">
+    <mxGraphModel dx="1800" dy="1500" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2600" pageHeight="3000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="EstiloFormulario" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;EstiloFormulario&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;hr&gt;+ aplicar_estilos(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#d5e8d4;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="40" y="70" width="510" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="ClienteForm" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ClienteForm&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ nombre: CharField {requerido}&lt;br&gt;+ rut: CharField&lt;br&gt;+ telefono: CharField&lt;br&gt;+ email: EmailField&lt;br&gt;+ direccion: CharField&lt;br&gt;+ notas: CharField&lt;br&gt;&lt;hr&gt;+ __init__(self, *args, **kwargs)&lt;br&gt;+ clean_rut(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#d5e8d4;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="40" y="450" width="510" height="248" as="geometry" />
+        </mxCell>
+        <mxCell id="ProyectoForm" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ProyectoForm&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ nombre: CharField {requerido}&lt;br&gt;+ cliente: ModelChoiceField&lt;br&gt;+ tipo_obra: TypedChoiceField {requerido}&lt;br&gt;+ descripcion: CharField&lt;br&gt;+ direccion: CharField&lt;br&gt;+ comuna: CharField&lt;br&gt;+ region: CharField&lt;br&gt;+ responsable: CharField&lt;br&gt;+ presupuesto_inicial: IntegerField {requerido}&lt;br&gt;+ fecha_inicio: DateField {requerido}&lt;br&gt;+ fecha_termino_estimada: DateField&lt;br&gt;+ observaciones: CharField&lt;br&gt;+ activo: BooleanField&lt;br&gt;{cliente, dirección, descripción y término requeridos en __init__}&lt;br&gt;&lt;hr&gt;+ __init__(self, *args, **kwargs)&lt;br&gt;+ clean_nombre(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#d5e8d4;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="660" y="450" width="510" height="400" as="geometry" />
+        </mxCell>
+        <mxCell id="EgresoForm" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;EgresoForm&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ tipo_egreso: ChoiceField {requerido}&lt;br&gt;+ proyecto_id: ModelChoiceField {requerido}&lt;br&gt;+ monto: IntegerField {requerido}&lt;br&gt;+ fecha: DateField {requerido}&lt;br&gt;+ proveedor: CharField&lt;br&gt;+ categoria: ChoiceField&lt;br&gt;+ empleado_id: ModelChoiceField&lt;br&gt;+ trabajador: CharField&lt;br&gt;+ concepto: CharField&lt;br&gt;&lt;hr&gt;+ __init__(self, *args, instance=None, **kwargs)&lt;br&gt;+ clean(self)&lt;br&gt;+ save(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#d5e8d4;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="450" width="510" height="324" as="geometry" />
+        </mxCell>
+        <mxCell id="HitoForm" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;HitoForm&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ proyecto_id: ModelChoiceField {requerido}&lt;br&gt;+ nombre: CharField {requerido}&lt;br&gt;+ fecha: DateField {requerido}&lt;br&gt;&lt;hr&gt;+ __init__(self, *args, **kwargs)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#d5e8d4;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1220" width="510" height="172" as="geometry" />
+        </mxCell>
+        <mxCell id="UsuarioForm" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«clase»&lt;/i&gt;&lt;br&gt;&lt;b&gt;UsuarioForm&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;+ username: CharField {requerido}&lt;br&gt;+ first_name: CharField&lt;br&gt;+ last_name: CharField&lt;br&gt;+ email: EmailField&lt;br&gt;+ is_active: BooleanField&lt;br&gt;+ rol: ChoiceField {requerido}&lt;br&gt;+ especialidad: CharField&lt;br&gt;+ obra_asignada: ModelChoiceField&lt;br&gt;+ password: CharField&lt;br&gt;+ password_confirm: CharField&lt;br&gt;&lt;hr&gt;+ __init__(self, *args, actor, **kwargs)&lt;br&gt;+ clean_username(self)&lt;br&gt;+ clean(self)&lt;br&gt;+ save(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#d5e8d4;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="660" y="1220" width="510" height="362" as="geometry" />
+        </mxCell>
+        <mxCell id="ModelForm" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«framework»&lt;/i&gt;&lt;br&gt;&lt;b&gt;django.forms.ModelForm&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;hr&gt;+ is_valid(): bool&lt;br&gt;+ save(commit=True): Model&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#f5f5f5;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="660" y="70" width="510" height="134" as="geometry" />
+        </mxCell>
+        <mxCell id="Form" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«framework»&lt;/i&gt;&lt;br&gt;&lt;b&gt;django.forms.Form&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;hr&gt;+ is_valid(): bool&lt;br&gt;+ clean(): dict&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#f5f5f5;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="70" width="510" height="134" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-17" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.2;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="ClienteForm" target="EstiloFormulario">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="142" y="270" />
+              <mxPoint x="295" y="270" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-18" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.8;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="ClienteForm" target="ModelForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="448" y="390" />
+              <mxPoint x="915" y="390" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-19" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.2;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="ProyectoForm" target="EstiloFormulario">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="762" y="290" />
+              <mxPoint x="295" y="290" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-20" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.8;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="ProyectoForm" target="ModelForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1068" y="370" />
+              <mxPoint x="915" y="370" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-21" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.2;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="EgresoForm" target="EstiloFormulario">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1382" y="310" />
+              <mxPoint x="295" y="310" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-22" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.8;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="EgresoForm" target="Form">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1688" y="350" />
+              <mxPoint x="1535" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-23" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.2;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="HitoForm" target="EstiloFormulario">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="142" y="1170" />
+              <mxPoint x="580" y="1170" />
+              <mxPoint x="580" y="330" />
+              <mxPoint x="295" y="330" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-24" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.8;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="HitoForm" target="Form">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="448" y="1190" />
+              <mxPoint x="620" y="1190" />
+              <mxPoint x="620" y="410" />
+              <mxPoint x="1535" y="410" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-25" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.2;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="UsuarioForm" target="EstiloFormulario">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="762" y="1140" />
+              <mxPoint x="600" y="1140" />
+              <mxPoint x="600" y="340" />
+              <mxPoint x="295" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-26" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=0;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.8;exitY=0;entryX=0.5;entryY=1;" edge="1" parent="1" source="UsuarioForm" target="ModelForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1068" y="1160" />
+              <mxPoint x="1230" y="1160" />
+              <mxPoint x="1230" y="400" />
+              <mxPoint x="915" y="400" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="views" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«módulo de funciones»&lt;/i&gt;&lt;br&gt;&lt;b&gt;construApp.views&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;hr&gt;+ health(request)&lt;br&gt;+ iniciar_sesion(request)&lt;br&gt;+ cerrar_sesion(request)&lt;br&gt;+ portal_empleado(request)&lt;br&gt;+ inicio(request)&lt;br&gt;+ proyectos_view(request)&lt;br&gt;+ proyecto_detalle(request, pk)&lt;br&gt;+ proyecto_editar(request, pk)&lt;br&gt;+ proyecto_eliminar(request, pk)&lt;br&gt;+ clientes_view(request)&lt;br&gt;+ cliente_detalle(request, pk)&lt;br&gt;+ cliente_editar(request, pk)&lt;br&gt;+ finanzas_view(request)&lt;br&gt;+ obtener_egreso(tipo, pk)&lt;br&gt;+ egreso_editar(request, tipo, pk)&lt;br&gt;+ egreso_eliminar(request, tipo, pk)&lt;br&gt;+ calendario_view(request)&lt;br&gt;+ registro_usuario(request)&lt;br&gt;+ usuario_gestionable(request, pk)&lt;br&gt;+ usuario_detalle(request, pk)&lt;br&gt;+ usuario_editar(request, pk)&lt;br&gt;+ usuario_eliminar(request, pk)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#ffe6cc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="70" width="620" height="514" as="geometry" />
+        </mxCell>
+        <mxCell id="permisos" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«módulo de funciones»&lt;/i&gt;&lt;br&gt;&lt;b&gt;construApp.permisos&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;hr&gt;+ obtener_rol_usuario(usuario)&lt;br&gt;+ proyectos_visibles(usuario)&lt;br&gt;+ solo_administrador(vista)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#ffe6cc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="1000" width="620" height="153" as="geometry" />
+        </mxCell>
+        <mxCell id="signals" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«módulo de funciones»&lt;/i&gt;&lt;br&gt;&lt;b&gt;construApp.signals&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;hr&gt;+ asegurar_perfil_usuario(sender, instance, created, raw=False, using=&amp;#x27;default&amp;#x27;, **kwargs)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#ffe6cc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="1270" width="620" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="context_processors" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«módulo de funciones»&lt;/i&gt;&lt;br&gt;&lt;b&gt;construApp.context_processors&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;hr&gt;+ permisos_usuario(request)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#ffe6cc;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="1530" width="620" height="115" as="geometry" />
+        </mxCell>
+        <mxCell id="NoCacheMiddleware" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«middleware»&lt;/i&gt;&lt;br&gt;&lt;b&gt;NoCacheMiddleware&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;&lt;hr&gt;+ __init__(self, get_response)&lt;br&gt;+ __call__(self, request)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#e1d5e7;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="1650" width="510" height="134" as="geometry" />
+        </mxCell>
+        <mxCell id="ConstruappConfig" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«apps»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ConstruappConfig&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;{hereda de AppConfig}&lt;br&gt;name = &amp;#x27;construApp&amp;#x27;&lt;br&gt;&lt;hr&gt;+ ready(self)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#e1d5e7;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="40" y="2050" width="510" height="153" as="geometry" />
+        </mxCell>
+        <mxCell id="ClienteAdmin" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«admin»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ClienteAdmin&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;{hereda de admin.ModelAdmin}&lt;br&gt;form = ClienteForm&lt;br&gt;list_display = (&amp;#x27;nombre&amp;#x27;, &amp;#x27;rut&amp;#x27;, &amp;#x27;telefono&amp;#x27;, &amp;#x27;email&amp;#x27;)&lt;br&gt;search_fields = (&amp;#x27;nombre&amp;#x27;, &amp;#x27;rut&amp;#x27;, &amp;#x27;email&amp;#x27;)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#e1d5e7;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="660" y="2050" width="510" height="156" as="geometry" />
+        </mxCell>
+        <mxCell id="ProyectoAdmin" value="&lt;div style='text-align:center'&gt;&lt;i&gt;«admin»&lt;/i&gt;&lt;br&gt;&lt;b&gt;ProyectoAdmin&lt;/b&gt;&lt;/div&gt;&lt;hr&gt;{hereda de admin.ModelAdmin}&lt;br&gt;form = ProyectoForm&lt;br&gt;list_display = (&amp;#x27;nombre&amp;#x27;, &amp;#x27;cliente&amp;#x27;, &amp;#x27;fecha_inicio&amp;#x27;, &amp;#x27;fecha_termino_estimada&amp;#x27;, &amp;#x27;activo&amp;#x27;)&lt;br&gt;list_select_related = (&amp;#x27;cliente&amp;#x27;,)&lt;br&gt;search_fields = (&amp;#x27;nombre&amp;#x27;, &amp;#x27;cliente__nombre&amp;#x27;, &amp;#x27;direccion&amp;#x27;)&lt;br&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;spacing=12;fontSize=12;fontFamily=Helvetica;fontColor=#1f2937;fillColor=#e1d5e7;strokeColor=#4b6584;" vertex="1" parent="1">
+          <mxGeometry x="1280" y="2050" width="510" height="194" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-27" value="usa formulario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0;exitY=0.2;entryX=0.5;entryY=0;" edge="1" parent="1" source="views" target="ClienteForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1810" y="180" />
+              <mxPoint x="1810" y="420" />
+              <mxPoint x="295" y="420" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-28" value="usa formulario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0;exitY=0.30000000000000004;entryX=0.5;entryY=0;" edge="1" parent="1" source="views" target="ProyectoForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1820" y="230" />
+              <mxPoint x="1820" y="430" />
+              <mxPoint x="915" y="430" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-29" value="usa formulario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0;exitY=0.4;entryX=0.5;entryY=0;" edge="1" parent="1" source="views" target="EgresoForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1830" y="280" />
+              <mxPoint x="1830" y="440" />
+              <mxPoint x="1535" y="440" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-30" value="usa formulario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0;exitY=0.5;entryX=0.5;entryY=0;" edge="1" parent="1" source="views" target="HitoForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1840" y="330" />
+              <mxPoint x="1840" y="950" />
+              <mxPoint x="295" y="950" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-31" value="usa formulario" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0;exitY=0.6000000000000001;entryX=0.5;entryY=0;" edge="1" parent="1" source="views" target="UsuarioForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1850" y="380" />
+              <mxPoint x="1850" y="980" />
+              <mxPoint x="915" y="980" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-32" value="autoriza" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;" edge="1" parent="1" source="views" target="permisos">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="relacion-33" value="consulta rol" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=1;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="context_processors" target="permisos">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2570" y="1588" />
+              <mxPoint x="2570" y="1080" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-34" value="ready(): importa señales" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0.5;exitY=0;entryX=0;entryY=0.5;" edge="1" parent="1" source="ConstruappConfig" target="signals">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="295" y="1850" />
+              <mxPoint x="1840" y="1850" />
+              <mxPoint x="1840" y="1328" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-35" value="form" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0;exitY=0.5;entryX=1;entryY=0.6;" edge="1" parent="1" source="ClienteAdmin" target="ClienteForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="580" y="2140" />
+              <mxPoint x="580" y="599" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="relacion-36" value="form" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;fontSize=11;labelBackgroundColor=#ffffff;strokeColor=#475569;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" edge="1" parent="1" source="ProyectoAdmin" target="ProyectoForm">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1230" y="2140" />
+              <mxPoint x="1230" y="650" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="capas-nota" value="Los recuadros naranjas son módulos de funciones, no clases inventadas.&lt;br&gt;Vistas: autenticación, portal, obras, clientes, egresos, calendario y usuarios.&lt;br&gt;ADMIN modifica; VISUALIZADOR consulta; EMPLEADO ve su obra y sus pagos.&lt;br&gt;Los cambios requieren POST y CSRF. El GET de eliminación solo confirma.&lt;br&gt;EgresoForm.save() crea o actualiza el tipo original. Los totales se calculan desde los registros vigentes.&lt;br&gt;Los atributos y operaciones de las clases propias se extraen del código. La API heredada del framework se resume." style="shape=note;whiteSpace=wrap;html=1;align=left;spacing=12;fontSize=12;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="1900" y="1930" width="620" height="240" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

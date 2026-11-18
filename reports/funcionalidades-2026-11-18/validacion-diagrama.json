@@ -1,0 +1,23 @@
+{
+  "resultado": "OK",
+  "paginas": [
+    {
+      "pagina": "1. Modelo de dominio",
+      "vertices": 9,
+      "edges": 7,
+      "sin_solapamiento_de_clases": true
+    },
+    {
+      "pagina": "2. Autenticación y tablas de Django",
+      "vertices": 10,
+      "edges": 9,
+      "sin_solapamiento_de_clases": true
+    },
+    {
+      "pagina": "3. Formularios y control de la aplicación",
+      "vertices": 17,
+      "edges": 20,
+      "sin_solapamiento_de_clases": true
+    }
+  ]
+}

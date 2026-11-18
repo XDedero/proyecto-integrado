@@ -1,0 +1,10 @@
+<script>
+function alternarCampos() {
+    const selector = document.getElementById("tipo_egreso");
+    if (!selector) return;
+    const esMaterial = selector.value === "MATERIAL";
+    document.getElementById("bloque_materiales").hidden = !esMaterial;
+    document.getElementById("bloque_mano_obra").hidden = esMaterial;
+}
+alternarCampos();
+</script>

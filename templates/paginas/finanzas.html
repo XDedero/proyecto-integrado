@@ -16,55 +16,7 @@
             <h5 class="fw-bold mb-3">Registrar gasto o pago</h5>
             <form method="POST" action="{% url 'finanzas' %}">
                 {% csrf_token %}
-                {% include "includes/form_errores.html" %}
-                <div class="mb-3">
-                    <label for="proyecto_id" class="form-label small fw-bold">1. Obra Asociada</label>
-                    {{ form.proyecto_id }}
-                </div>
-
-                <div class="mb-3">
-                    <label for="tipo_egreso" class="form-label small fw-bold">2. Tipo de Egreso</label>
-                    {{ form.tipo_egreso }}
-                </div>
-
-                <!-- Campos para Materiales -->
-                <div id="bloque_materiales">
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Proveedor</label>
-                        {{ form.proveedor }}
-                    </div>
-                    <div class="mb-3">
-                        <label for="categoria" class="form-label small fw-bold">Categoría de Material</label>
-                        {{ form.categoria }}
-                    </div>
-                </div>
-
-                <!-- Campos para Mano de Obra (Conectado con el Portal del Empleado) -->
-                <div id="bloque_mano_obra" style="display: none;">
-                    <div class="mb-3">
-                        <label for="empleado_id" class="form-label small fw-bold">Empleado registrado</label>
-                        {{ form.empleado_id }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">O escribir nombre del trabajador</label>
-                        {{ form.trabajador }}
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Labor o Concepto del Pago</label>
-                        {{ form.concepto }}
-                    </div>
-                </div>
-
-                <div class="row g-2 mb-4">
-                    <div class="col-7">
-                        <label class="form-label small fw-bold">Monto en CLP</label>
-                        {{ form.monto }}
-                    </div>
-                    <div class="col-5">
-                        <label class="form-label small fw-bold">Fecha</label>
-                        {{ form.fecha }}
-                    </div>
-                </div>
+                {% include "includes/egreso_campos.html" %}
 
                 <button type="submit" class="btn btn-ambar w-100 py-2">
                     <i class="bi bi-check2-circle me-1"></i> Guardar egreso
@@ -87,6 +39,7 @@
                             <th>Proveedor</th>
                             <th>Categoría</th>
                             <th class="text-end">Monto CLP</th>
+                            {% if es_admin %}<th scope="col">Acciones</th>{% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -97,9 +50,10 @@
                             <td>{{ g.proveedor }}</td>
                             <td><span class="badge bg-warning text-dark">{{ g.get_categoria_display }}</span></td>
                             <td class="text-end fw-bold text-danger">-${{ g.monto }}</td>
+                            {% if es_admin %}<td><div class="d-flex flex-wrap gap-2"><a href="{% url 'egreso_editar' 'material' g.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Editar gasto de {{ g.proveedor }}">Editar</a><a href="{% url 'egreso_eliminar' 'material' g.pk %}" class="btn btn-sm btn-outline-danger" aria-label="Eliminar gasto de {{ g.proveedor }}">Eliminar</a></div></td>{% endif %}
                         </tr>
                         {% empty %}
-                        <tr><td colspan="5" class="text-center text-muted py-3">Sin compras de materiales registradas.</td></tr>
+                        <tr><td colspan="{% if es_admin %}6{% else %}5{% endif %}" class="text-center text-muted py-3">Sin compras de materiales registradas.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -117,6 +71,7 @@
                             <th>Trabajador</th>
                             <th>Concepto</th>
                             <th class="text-end">Monto CLP</th>
+                            {% if es_admin %}<th scope="col">Acciones</th>{% endif %}
                         </tr>
                     </thead>
                     <tbody>
@@ -127,9 +82,10 @@
                             <td>{{ m.trabajador }}</td>
                             <td><span class="badge bg-info text-dark">{{ m.concepto }}</span></td>
                             <td class="text-end fw-bold text-danger">-${{ m.monto }}</td>
+                            {% if es_admin %}<td><div class="d-flex flex-wrap gap-2"><a href="{% url 'egreso_editar' 'mano-obra' m.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Editar pago de {{ m.trabajador }}">Editar</a><a href="{% url 'egreso_eliminar' 'mano-obra' m.pk %}" class="btn btn-sm btn-outline-danger" aria-label="Eliminar pago de {{ m.trabajador }}">Eliminar</a></div></td>{% endif %}
                         </tr>
                         {% empty %}
-                        <tr><td colspan="5" class="text-center text-muted py-3">Sin pagos de mano de obra registrados.</td></tr>
+                        <tr><td colspan="{% if es_admin %}6{% else %}5{% endif %}" class="text-center text-muted py-3">Sin pagos de mano de obra registrados.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -138,14 +94,5 @@
     </div>
 </div>
 
-<script>
-function alternarCampos() {
-    const selector = document.getElementById("tipo_egreso");
-    if (!selector) return;
-    const tipo = selector.value;
-    document.getElementById("bloque_materiales").style.display = (tipo === "MATERIAL") ? "block" : "none";
-    document.getElementById("bloque_mano_obra").style.display = (tipo === "MANO_OBRA") ? "block" : "none";
-}
-alternarCampos();
-</script>
+{% include "includes/egreso_script.html" %}
 {% endblock %}

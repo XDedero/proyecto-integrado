@@ -1,0 +1,212 @@
+{
+  "expected_revision": "42c8e83da580f55a5595119403a78aacc624f61f",
+  "checks": [
+    {
+      "check": "Render sirve la revisión esperada",
+      "passed": true
+    },
+    {
+      "check": "base de datos disponible",
+      "passed": true
+    },
+    {
+      "check": "GET /login/",
+      "passed": true
+    },
+    {
+      "check": "login y redirección /",
+      "passed": true
+    },
+    {
+      "check": "GET /proyectos/",
+      "passed": true
+    },
+    {
+      "check": "GET /usuarios/",
+      "passed": true
+    },
+    {
+      "check": "GET /finanzas/",
+      "passed": true
+    },
+    {
+      "check": "GET /calendario/",
+      "passed": true
+    },
+    {
+      "check": "GET /mi-portal/",
+      "passed": true
+    },
+    {
+      "check": "GET /usuarios/10/eliminar/",
+      "passed": true
+    },
+    {
+      "check": "GET /proyectos/6/eliminar/",
+      "passed": true
+    },
+    {
+      "check": "GET /proyectos/",
+      "passed": true
+    },
+    {
+      "check": "crear proyecto desde navegador",
+      "passed": true
+    },
+    {
+      "check": "GET /usuarios/",
+      "passed": true
+    },
+    {
+      "check": "crear empleado y asignarlo a obra",
+      "passed": true
+    },
+    {
+      "check": "GET /usuarios/2/editar/",
+      "passed": true
+    },
+    {
+      "check": "editar usuario conservando contraseña",
+      "passed": true
+    },
+    {
+      "check": "GET /finanzas/",
+      "passed": true
+    },
+    {
+      "check": "registrar compra de materiales",
+      "passed": true
+    },
+    {
+      "check": "cambio de campos de pago mediante JavaScript",
+      "passed": true
+    },
+    {
+      "check": "pagos y saldo coherentes",
+      "passed": true
+    },
+    {
+      "check": "GET /calendario/",
+      "passed": true
+    },
+    {
+      "check": "crear hito de calendario",
+      "passed": true
+    },
+    {
+      "check": "GET /proyectos/1/editar/",
+      "passed": true
+    },
+    {
+      "check": "editar proyecto",
+      "passed": true
+    },
+    {
+      "check": "GET /login/",
+      "passed": true
+    },
+    {
+      "check": "login y redirección /mi-portal/",
+      "passed": true
+    },
+    {
+      "check": "portal muestra el pago del empleado",
+      "passed": true
+    },
+    {
+      "check": "portal muestra el hito asignado",
+      "passed": true
+    },
+    {
+      "check": "GET /usuarios/",
+      "passed": true
+    },
+    {
+      "check": "GET /finanzas/",
+      "passed": true
+    },
+    {
+      "check": "empleado no accede a finanzas generales",
+      "passed": true
+    },
+    {
+      "check": "eliminación sin CSRF rechazada",
+      "passed": true
+    },
+    {
+      "check": "GET /usuarios/2/eliminar/",
+      "passed": true
+    },
+    {
+      "check": "eliminar usuario desde confirmación",
+      "passed": true
+    },
+    {
+      "check": "eliminar usuario conserva pagos históricos",
+      "passed": true
+    },
+    {
+      "check": "GET /usuarios/2/eliminar/",
+      "passed": true
+    },
+    {
+      "check": "GET repetido de eliminación de usuario sin 404",
+      "passed": true
+    },
+    {
+      "check": "POST repetido /usuarios/2/eliminar/",
+      "passed": true
+    },
+    {
+      "check": "GET /mi-portal/",
+      "passed": true
+    },
+    {
+      "check": "cuenta eliminada pierde acceso",
+      "passed": true
+    },
+    {
+      "check": "GET /proyectos/1/eliminar/",
+      "passed": true
+    },
+    {
+      "check": "eliminar proyecto desde confirmación",
+      "passed": true
+    },
+    {
+      "check": "eliminación en cascada de datos temporales",
+      "passed": true
+    },
+    {
+      "check": "GET /proyectos/1/eliminar/",
+      "passed": true
+    },
+    {
+      "check": "GET repetido de eliminación de proyecto sin 404",
+      "passed": true
+    },
+    {
+      "check": "POST repetido /proyectos/1/eliminar/",
+      "passed": true
+    },
+    {
+      "check": "cerrar sesión",
+      "passed": true
+    },
+    {
+      "check": "sin excepciones JavaScript en el flujo",
+      "passed": true
+    },
+    {
+      "check": "sin respuestas 500 en el flujo",
+      "passed": true
+    }
+  ],
+  "javascript_errors": [],
+  "server_errors": [],
+  "status": "passed",
+  "cleanup": {
+    "temporary_users_remaining": 0,
+    "temporary_projects_remaining": 0
+  }
+}

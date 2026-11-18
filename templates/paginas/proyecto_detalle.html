@@ -3,7 +3,21 @@
 {% block content %}
 <div class="page-toolbar"><div><span class="label-tecnico">Proyecto #{{ proyecto.pk }}</span><h3 class="mb-0 mt-1">{{ proyecto.nombre }}</h3></div>
 <div class="d-flex flex-wrap gap-2"><a href="{% url 'proyectos' %}" class="btn btn-outline-secondary">Volver a proyectos</a>{% if es_admin %}<a href="{% url 'proyecto_editar' proyecto.pk %}" class="btn btn-obra">Editar proyecto</a><a href="{% url 'proyecto_eliminar' proyecto.pk %}" class="btn btn-outline-danger">Eliminar</a>{% endif %}</div></div>
-<div class="bento-card mb-4"><p>Inicio: <strong>{{ proyecto.fecha_inicio|date:"d/m/Y" }}</strong></p><p class="mb-0">Estado: {% if proyecto.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</p></div>
+<div class="bento-card mb-4"><h5>Ficha de la obra</h5>
+    <dl class="row mb-0">
+        <dt class="col-sm-4">Tipo de obra</dt><dd class="col-sm-8">{{ proyecto.get_tipo_obra_display }}</dd>
+        <dt class="col-sm-4">Dirección</dt><dd class="col-sm-8">{{ proyecto.direccion|default:"Pendiente de completar" }}{% if proyecto.comuna %}, {{ proyecto.comuna }}{% endif %}{% if proyecto.region %}, {{ proyecto.region }}{% endif %}</dd>
+        <dt class="col-sm-4">Descripción y alcance</dt><dd class="col-sm-8">{{ proyecto.descripcion|default:"Pendiente de completar"|linebreaksbr }}</dd>
+        <dt class="col-sm-4">Responsable</dt><dd class="col-sm-8">{{ proyecto.responsable|default:"Sin responsable registrado" }}</dd>
+        <dt class="col-sm-4">Inicio</dt><dd class="col-sm-8">{{ proyecto.fecha_inicio|date:"d/m/Y" }}</dd>
+        <dt class="col-sm-4">Término estimado</dt><dd class="col-sm-8">{{ proyecto.fecha_termino_estimada|date:"d/m/Y"|default:"Pendiente de completar" }}</dd>
+        <dt class="col-sm-4">Estado</dt><dd class="col-sm-8">{% if proyecto.activo %}<span class="badge bg-success">Activo</span>{% else %}<span class="badge bg-secondary">Inactivo</span>{% endif %}</dd>
+        {% if rol_usuario != 'EMPLEADO' %}
+        <dt class="col-sm-4">Cliente</dt><dd class="col-sm-8">{% if proyecto.cliente_id %}<a href="{% url 'cliente_detalle' proyecto.cliente_id %}">{{ proyecto.cliente }}</a>{% else %}Pendiente de vincular{% endif %}</dd>
+        <dt class="col-sm-4">Condiciones y observaciones</dt><dd class="col-sm-8">{{ proyecto.observaciones|default:"Sin observaciones"|linebreaksbr }}</dd>
+        {% endif %}
+    </dl>
+</div>
 {% if rol_usuario != 'EMPLEADO' %}
 <dl class="summary-grid">
     <div class="summary-item"><dt>Presupuesto inicial (CLP)</dt><dd>${{ proyecto.presupuesto_inicial }}</dd></div>

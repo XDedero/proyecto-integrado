@@ -1,0 +1,13 @@
+{% include "includes/form_errores.html" %}
+<div class="mb-3"><label for="proyecto_id" class="form-label">Obra asociada *</label>{{ form.proyecto_id }}</div>
+<div class="mb-3"><label for="tipo_egreso" class="form-label">Tipo de egreso *</label>{{ form.tipo_egreso }}</div>
+<div id="bloque_materiales">
+    <div class="mb-3"><label for="proveedor" class="form-label">Proveedor *</label>{{ form.proveedor }}</div>
+    <div class="mb-3"><label for="categoria" class="form-label">Categoría de material *</label>{{ form.categoria }}</div>
+</div>
+<div id="bloque_mano_obra">
+    <div class="mb-3"><label for="empleado_id" class="form-label">Empleado registrado</label>{{ form.empleado_id }}</div>
+    <div class="mb-3"><label for="trabajador" class="form-label">Nombre del trabajador (si no selecciona una cuenta)</label>{{ form.trabajador }}</div>
+    <div class="mb-3"><label for="concepto" class="form-label">Labor o concepto del pago</label>{{ form.concepto }}</div>
+</div>
+<div class="row g-2 mb-4"><div class="col-sm-7"><label for="monto" class="form-label">Monto en CLP *</label>{{ form.monto }}</div><div class="col-sm-5"><label for="fecha" class="form-label">Fecha *</label>{{ form.fecha }}</div></div>

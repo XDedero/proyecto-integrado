@@ -10,6 +10,7 @@
     {% if es_admin %}
     <div class="col-lg-4"><div class="bento-card">
         <h5>Registrar nueva obra</h5>
+        <p class="small">Seleccione un cliente existente o <a href="{% url 'clientes' %}">registre un nuevo cliente</a> antes de crear su obra.</p>
         <form method="post" action="{% url 'proyectos' %}" novalidate>
             {% csrf_token %}{% include "includes/form_campos.html" %}
             <button type="submit" class="btn btn-obra w-100">Guardar proyecto</button>
@@ -19,17 +20,18 @@
     <div class="{% if es_admin %}col-lg-8{% else %}col-12{% endif %}"><div class="bento-card">
         <h5>Listado de obras</h5>
         <div class="table-responsive"><table class="table align-middle mb-0">
-            <thead><tr><th scope="col">Obra</th><th scope="col">Inicio</th><th scope="col">Estado</th>{% if rol_usuario != 'EMPLEADO' %}<th scope="col" class="text-end">Presupuesto (CLP)</th>{% endif %}<th scope="col">Acciones</th></tr></thead>
+            <thead><tr><th scope="col">Obra</th>{% if rol_usuario != 'EMPLEADO' %}<th scope="col">Cliente</th>{% endif %}<th scope="col">Inicio / Término estimado</th><th scope="col">Estado</th>{% if rol_usuario != 'EMPLEADO' %}<th scope="col" class="text-end">Presupuesto (CLP)</th>{% endif %}<th scope="col">Acciones</th></tr></thead>
             <tbody>{% for p in proyectos %}<tr>
                 <th scope="row"><a href="{% url 'proyecto_detalle' p.pk %}">{{ p.nombre }}</a></th>
-                <td>{{ p.fecha_inicio|date:"d/m/Y" }}</td>
+                {% if rol_usuario != 'EMPLEADO' %}<td>{% if p.cliente_id %}<a href="{% url 'cliente_detalle' p.cliente_id %}">{{ p.cliente.nombre }}</a>{% else %}<span class="text-muted">Pendiente de vincular</span>{% endif %}</td>{% endif %}
+                <td>{{ p.fecha_inicio|date:"d/m/Y" }}<br><span class="text-muted">{{ p.fecha_termino_estimada|date:"d/m/Y"|default:"Sin fecha estimada" }}</span></td>
                 <td>{% if p.activo %}<span class="badge bg-success">Activa</span>{% else %}<span class="badge bg-secondary">Inactiva</span>{% endif %}</td>
                 {% if rol_usuario != 'EMPLEADO' %}<td class="text-end cifra-monetaria">${{ p.presupuesto_inicial }}</td>{% endif %}
                 <td><div class="d-flex flex-wrap gap-2">
                     <a href="{% url 'proyecto_detalle' p.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Ver {{ p.nombre }}">Ver</a>
                     {% if es_admin %}<a href="{% url 'proyecto_editar' p.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Editar {{ p.nombre }}">Editar</a><a href="{% url 'proyecto_eliminar' p.pk %}" class="btn btn-sm btn-outline-danger" aria-label="Eliminar {{ p.nombre }}">Eliminar</a>{% endif %}
                 </div></td>
-            </tr>{% empty %}<tr><td colspan="5" class="text-muted text-center py-4">{% if rol_usuario == 'EMPLEADO' %}Aún no tiene una obra asignada.{% else %}No hay proyectos registrados.{% endif %}</td></tr>{% endfor %}</tbody>
+            </tr>{% empty %}<tr><td colspan="{% if rol_usuario == 'EMPLEADO' %}4{% else %}6{% endif %}" class="text-muted text-center py-4">{% if rol_usuario == 'EMPLEADO' %}Aún no tiene una obra asignada.{% else %}No hay proyectos registrados.{% endif %}</td></tr>{% endfor %}</tbody>
         </table></div>
     </div></div>
 </div>

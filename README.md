@@ -105,3 +105,14 @@ Las pruebas usan una base SQLite temporal en memoria, sin crear tablas ni datos 
 Las cuentas y perfiles se guardan en una transacción: si falla el perfil, se revierte también la cuenta. Se validan contraseñas y su confirmación, roles, obras seleccionadas, fechas, presupuestos y nombres duplicados. Al editar, dejar ambas contraseñas vacías conserva la actual.
 
 Las eliminaciones requieren confirmación y un POST con CSRF. Eliminar una obra elimina sus gastos, pagos e hitos y deja al personal sin esa asignación; desactivarla permite conservar el historial. Eliminar un usuario conserva sus pagos con el nombre del trabajador y elimina la vinculación a su cuenta.
+su
+
+## Clientes, ficha ampliada de obra y corrección de pagos
+
+Se añadieron fichas e historial de clientes con múltiples obras, datos ampliados
+de registro de obra y edición/eliminación de gastos de materiales y pagos de mano
+de obra. Consulte la [guía de funcionalidades y migración](docs/FUNCIONALIDADES.md)
+y el [diagrama de clases editable para draw.io](docs/diagrama-clases.drawio).
+
+Para habilitar la estructura nueva en la base configurada, ejecute
+`python manage.py migrate` (migración `0005_clientes_y_ficha_obra`).

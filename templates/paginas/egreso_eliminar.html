@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Eliminar gasto o pago — Constructora LC{% endblock %}
+{% block content %}
+<div class="page-toolbar"><h3 class="mb-0">Confirmar eliminación</h3><a href="{% url 'finanzas' %}" class="btn btn-outline-secondary">Volver a gastos y pagos</a></div>
+<div class="bento-card" style="max-width:640px">
+    <h5>{% if tipo == 'material' %}Eliminar gasto de material{% else %}Eliminar pago de mano de obra{% endif %}</h5>
+    <dl class="row"><dt class="col-sm-4">Obra</dt><dd class="col-sm-8">{{ egreso.proyecto.nombre }}</dd><dt class="col-sm-4">Fecha</dt><dd class="col-sm-8">{{ egreso.fecha|date:"d/m/Y" }}</dd><dt class="col-sm-4">Monto (CLP)</dt><dd class="col-sm-8">${{ egreso.monto }}</dd>
+    {% if tipo == 'material' %}<dt class="col-sm-4">Proveedor / Categoría</dt><dd class="col-sm-8">{{ egreso.proveedor }} / {{ egreso.get_categoria_display }}</dd>{% else %}<dt class="col-sm-4">Trabajador / Concepto</dt><dd class="col-sm-8">{{ egreso.trabajador }} / {{ egreso.concepto }}</dd>{% endif %}</dl>
+    <p class="alert alert-warning">Se eliminará este registro de forma permanente y se recalculará el saldo de la obra{% if tipo == 'mano-obra' %} y el total recibido por el trabajador{% endif %}.</p>
+    <form method="post">{% csrf_token %}<button type="submit" class="btn btn-danger">Eliminar definitivamente</button> <a href="{% url 'finanzas' %}" class="btn btn-outline-secondary">Cancelar</a></form>
+</div>
+{% endblock %}

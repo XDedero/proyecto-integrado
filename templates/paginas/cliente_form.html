@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Editar cliente — Constructora LC{% endblock %}
+{% block content %}
+<div class="page-toolbar"><h3 class="mb-0">Editar {{ cliente.nombre }}</h3><a href="{% url 'cliente_detalle' cliente.pk %}" class="btn btn-outline-secondary">Volver al historial</a></div>
+<div class="bento-card" style="max-width:640px"><form method="post" novalidate>{% csrf_token %}{% include "includes/form_campos.html" %}<button type="submit" class="btn btn-obra">Guardar cambios</button> <a href="{% url 'cliente_detalle' cliente.pk %}" class="btn btn-outline-secondary">Cancelar</a></form></div>
+{% endblock %}

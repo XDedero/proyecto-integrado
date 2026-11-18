@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Clientes e historial — Constructora LC{% endblock %}
+{% block content %}
+<div class="page-toolbar"><div><span class="label-tecnico">Gestión de clientes</span><h3 class="mb-0 mt-1">Clientes e historial de obras</h3></div><a href="{% url 'proyectos' %}" class="btn btn-outline-secondary">Obras y presupuestos</a></div>
+<p>Registre una sola ficha por cliente y selecciónela en cada una de sus obras para consultar su historial completo.</p>
+<div class="row g-4">
+    {% if es_admin %}<div class="col-lg-4"><div class="bento-card"><h5>Registrar cliente</h5>
+        <form method="post" action="{% url 'clientes' %}" novalidate>{% csrf_token %}{% include "includes/form_campos.html" %}<button type="submit" class="btn btn-obra w-100">Guardar cliente</button></form>
+    </div></div>{% endif %}
+    <div class="{% if es_admin %}col-lg-8{% else %}col-12{% endif %}"><div class="bento-card"><h5>Clientes registrados</h5>
+        <form method="get" class="d-flex gap-2 mb-3"><label class="visually-hidden" for="buscar-cliente">Buscar por nombre, RUT o correo</label><input id="buscar-cliente" name="q" class="form-control" value="{{ busqueda }}" placeholder="Nombre, RUT o correo"><button class="btn btn-outline-secondary" type="submit">Buscar</button>{% if busqueda %}<a href="{% url 'clientes' %}" class="btn btn-outline-secondary">Limpiar</a>{% endif %}</form>
+        <div class="table-responsive"><table class="table align-middle mb-0">
+            <thead><tr><th scope="col">Cliente / RUT</th><th scope="col">Contacto</th><th scope="col">Obras</th><th scope="col" class="text-end">Presupuesto acumulado (CLP)</th><th scope="col">Acciones</th></tr></thead>
+            <tbody>{% for cliente in clientes %}<tr>
+                <th scope="row"><a href="{% url 'cliente_detalle' cliente.pk %}">{{ cliente.nombre }}</a><br><span class="text-muted fw-normal">{{ cliente.rut|default:"Sin RUT registrado" }}</span></th>
+                <td>{{ cliente.telefono|default:"Sin teléfono" }}<br>{{ cliente.email|default:"Sin correo" }}</td>
+                <td>{{ cliente.cantidad_proyectos }}</td><td class="text-end cifra-monetaria">${{ cliente.presupuesto_acumulado|default:0 }}</td>
+                <td><div class="d-flex flex-wrap gap-2"><a href="{% url 'cliente_detalle' cliente.pk %}" class="btn btn-sm btn-outline-secondary">Ver historial</a>{% if es_admin %}<a href="{% url 'cliente_editar' cliente.pk %}" class="btn btn-sm btn-outline-secondary">Editar</a>{% endif %}</div></td>
+            </tr>{% empty %}<tr><td colspan="5" class="text-muted text-center py-4">No se encontraron clientes.</td></tr>{% endfor %}</tbody>
+        </table></div>
+    </div></div>
+</div>
+{% endblock %}

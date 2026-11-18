@@ -1,28 +1,79 @@
 from datetime import date
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Sum
+
+
+class Cliente(models.Model):
+    """Cliente compartido por todas sus obras, independiente de las cuentas de acceso."""
+
+    nombre = models.CharField(max_length=150, verbose_name="Nombre o razón social")
+    rut = models.CharField(max_length=20, unique=True, null=True, blank=True, verbose_name="RUT (opcional)")
+    telefono = models.CharField(max_length=30, blank=True, verbose_name="Teléfono")
+    email = models.EmailField(blank=True, verbose_name="Correo electrónico")
+    direccion = models.CharField(max_length=255, blank=True, verbose_name="Dirección del cliente")
+    notas = models.TextField(blank=True, verbose_name="Notas del cliente")
+    creado_en = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de registro")
+
+    class Meta:
+        verbose_name = "Cliente"
+        verbose_name_plural = "Clientes"
+        ordering = ["nombre", "pk"]
+
+    def __str__(self):
+        return f"{self.nombre} ({self.rut})" if self.rut else self.nombre
 
 
 class Proyecto(models.Model):
     """Representa una obra de la Constructora LC y su presupuesto inicial (HU-04, HU-07)."""
 
     nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre del proyecto")
+    TIPOS_OBRA = [
+        ("CONSTRUCCION", "Construcción nueva"),
+        ("REMODELACION", "Remodelación"),
+        ("AMPLIACION", "Ampliación"),
+        ("REPARACION", "Reparación y mantenimiento"),
+        ("OTRO", "Otro"),
+    ]
+    cliente = models.ForeignKey(
+        Cliente, on_delete=models.PROTECT, related_name="proyectos",
+        null=True, blank=True, verbose_name="Cliente",
+    )
+    direccion = models.CharField(max_length=255, blank=True, verbose_name="Dirección de la obra")
+    comuna = models.CharField(max_length=100, blank=True, verbose_name="Comuna")
+    region = models.CharField(max_length=100, blank=True, verbose_name="Región")
+    descripcion = models.TextField(blank=True, verbose_name="Descripción y alcance de los trabajos")
+    tipo_obra = models.CharField(max_length=20, choices=TIPOS_OBRA, default="CONSTRUCCION", verbose_name="Tipo de obra")
+    responsable = models.CharField(max_length=150, blank=True, verbose_name="Responsable de la obra")
+    observaciones = models.TextField(blank=True, verbose_name="Observaciones y condiciones acordadas")
     presupuesto_inicial = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
         verbose_name="Presupuesto inicial (CLP)",
     )
     fecha_inicio = models.DateField(verbose_name="Fecha de inicio")
+    fecha_termino_estimada = models.DateField(null=True, blank=True, verbose_name="Fecha estimada de término")
     activo = models.BooleanField(default=True, verbose_name="Proyecto activo")
 
     class Meta:
         verbose_name = "Proyecto"
         verbose_name_plural = "Proyectos"
         ordering = ["-fecha_inicio"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(fecha_termino_estimada__isnull=True) | models.Q(fecha_termino_estimada__gte=models.F("fecha_inicio")),
+                name="proyecto_termino_no_anterior_inicio",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.nombre} (${self.presupuesto_inicial:,} CLP)"
+
+    def clean(self):
+        super().clean()
+        if self.fecha_inicio and self.fecha_termino_estimada and self.fecha_termino_estimada < self.fecha_inicio:
+            raise ValidationError({"fecha_termino_estimada": "La fecha estimada de término no puede ser anterior al inicio."})
 
     @property
     def total_materiales(self):

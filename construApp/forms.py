@@ -1,3 +1,5 @@
+import re
+
 from django import forms
 from django.contrib.auth import password_validation
 from django.contrib.auth.models import User
@@ -6,7 +8,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils.html import format_html
 
-from .models import GastoMaterial, PerfilUsuario, Proyecto
+from .models import Cliente, GastoMaterial, PagoManoObra, PerfilUsuario, Proyecto
 
 
 class EstiloFormulario:
@@ -20,17 +22,50 @@ class EstiloFormulario:
                 campo.widget.attrs["class"] = "form-control"
 
 
+class ClienteForm(EstiloFormulario, forms.ModelForm):
+    class Meta:
+        model = Cliente
+        fields = ["nombre", "rut", "telefono", "email", "direccion", "notas"]
+        widgets = {"notas": forms.Textarea(attrs={"rows": 3})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.aplicar_estilos()
+
+    def clean_rut(self):
+        compacto = re.sub(r"[.\s-]", "", self.cleaned_data.get("rut") or "").upper()
+        if compacto and not re.fullmatch(r"[0-9]{1,8}[0-9K]", compacto):
+            raise ValidationError("Ingrese el RUT con su dígito verificador, por ejemplo 12345678-5.")
+        rut = f"{compacto[:-1]}-{compacto[-1]}" if compacto else None
+        if rut and Cliente.objects.filter(rut__iexact=rut).exclude(pk=self.instance.pk).exists():
+            raise ValidationError("Ya existe un cliente con ese RUT. Selecciónelo para reunir sus obras en el mismo historial.")
+        return rut
+
+
 class ProyectoForm(EstiloFormulario, forms.ModelForm):
     presupuesto_inicial = forms.IntegerField(
         label="Presupuesto inicial (CLP)", min_value=1, max_value=2147483647,
     )
     class Meta:
         model = Proyecto
-        fields = ["nombre", "presupuesto_inicial", "fecha_inicio", "activo"]
-        widgets = {"fecha_inicio": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"})}
+        fields = [
+            "nombre", "cliente", "tipo_obra", "descripcion", "direccion", "comuna", "region",
+            "responsable", "presupuesto_inicial", "fecha_inicio", "fecha_termino_estimada", "observaciones", "activo",
+        ]
+        widgets = {
+            "fecha_inicio": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+            "fecha_termino_estimada": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+            "descripcion": forms.Textarea(attrs={"rows": 3}),
+            "observaciones": forms.Textarea(attrs={"rows": 3}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Los registros anteriores pueden seguir incompletos en la base; al guardar
+        # una ficha se exigen los datos mínimos de una obra nueva o actualizada.
+        for nombre in ("cliente", "direccion", "descripcion", "fecha_termino_estimada"):
+            self.fields[nombre].required = True
+        self.fields["cliente"].help_text = "Seleccione el cliente existente para conservar todas sus obras en un mismo historial."
         self.aplicar_estilos()
 
     def clean_nombre(self):
@@ -51,10 +86,26 @@ class EgresoForm(EstiloFormulario, forms.Form):
     trabajador = forms.CharField(label="Nombre del trabajador", max_length=100, required=False)
     concepto = forms.CharField(label="Concepto", max_length=120, required=False, initial="Jornal / Avance de Obra")
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, instance=None, **kwargs):
+        self.instance = instance
         super().__init__(*args, **kwargs)
-        self.fields["proyecto_id"].queryset = Proyecto.objects.filter(activo=True)
-        self.fields["empleado_id"].queryset = User.objects.filter(is_active=True, is_superuser=False, perfil__rol="EMPLEADO")
+        proyecto_actual = instance.proyecto_id if instance else None
+        empleado_actual = instance.empleado_id if isinstance(instance, PagoManoObra) else None
+        self.fields["proyecto_id"].queryset = Proyecto.objects.filter(Q(activo=True) | Q(pk=proyecto_actual))
+        self.fields["empleado_id"].queryset = User.objects.filter(
+            Q(is_active=True, is_superuser=False, perfil__rol="EMPLEADO") | Q(pk=empleado_actual)
+        )
+        if instance:
+            self.initial.update({
+                "tipo_egreso": "MATERIAL" if isinstance(instance, GastoMaterial) else "MANO_OBRA",
+                "proyecto_id": instance.proyecto_id, "monto": instance.monto, "fecha": instance.fecha,
+            })
+            if isinstance(instance, GastoMaterial):
+                self.initial.update(proveedor=instance.proveedor, categoria=instance.categoria)
+            else:
+                self.initial.update(empleado_id=instance.empleado_id, trabajador=instance.trabajador, concepto=instance.concepto)
+            # Una corrección no convierte una compra en un pago de otro tipo.
+            self.fields["tipo_egreso"].disabled = True
         self.aplicar_estilos()
         for nombre, campo in self.fields.items():
             campo.widget.attrs["id"] = nombre
@@ -77,6 +128,24 @@ class EgresoForm(EstiloFormulario, forms.Form):
                     self.add_error("trabajador", "Seleccione un empleado o escriba el nombre del trabajador.")
             datos["concepto"] = datos.get("concepto") or "Jornal / Avance de Obra"
         return datos
+
+    @transaction.atomic
+    def save(self):
+        datos = self.cleaned_data
+        modelo = GastoMaterial if datos["tipo_egreso"] == "MATERIAL" else PagoManoObra
+        valores = {"proyecto": datos["proyecto_id"], "monto": datos["monto"], "fecha": datos["fecha"]}
+        if modelo is GastoMaterial:
+            valores.update(proveedor=datos["proveedor"], categoria=datos["categoria"])
+        else:
+            valores.update(empleado=datos.get("empleado_id"), trabajador=datos["trabajador"], concepto=datos["concepto"])
+        if self.instance is None:
+            self.instance = modelo.objects.create(**valores)
+        else:
+            for campo, valor in valores.items():
+                setattr(self.instance, campo, valor)
+            # UPDATE evita recrear un registro eliminado mientras se editaba.
+            self.instance.save(update_fields=list(valores))
+        return self.instance
 
 
 class HitoForm(EstiloFormulario, forms.Form):

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Editar gasto o pago — Constructora LC{% endblock %}
+{% block content %}
+<div class="page-toolbar"><h3 class="mb-0">{% if tipo == 'material' %}Editar gasto de material{% else %}Editar pago de mano de obra{% endif %}</h3><a href="{% url 'finanzas' %}" class="btn btn-outline-secondary">Volver a gastos y pagos</a></div>
+<div class="bento-card" style="max-width:640px">
+    <p>Corrija los datos del registro #{{ egreso.pk }}. Al guardar se actualizarán los saldos de las obras y los pagos del trabajador.</p>
+    <form method="post" novalidate>{% csrf_token %}{% include "includes/egreso_campos.html" %}
+        <button type="submit" class="btn btn-obra">Guardar cambios</button> <a href="{% url 'finanzas' %}" class="btn btn-outline-secondary">Cancelar</a>
+    </form>
+</div>
+{% include "includes/egreso_script.html" %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ cliente.nombre }} — Historial del cliente{% endblock %}
+{% block content %}
+<div class="page-toolbar"><div><span class="label-tecnico">Cliente #{{ cliente.pk }}</span><h3 class="mb-0 mt-1">{{ cliente.nombre }}</h3></div><div class="d-flex flex-wrap gap-2"><a href="{% url 'clientes' %}" class="btn btn-outline-secondary">Volver a clientes</a>{% if es_admin %}<a href="{% url 'cliente_editar' cliente.pk %}" class="btn btn-obra">Editar cliente</a><a href="{% url 'proyectos' %}?cliente={{ cliente.pk }}" class="btn btn-outline-secondary">Registrar obra para este cliente</a>{% endif %}</div></div>
+<div class="bento-card mb-4"><h5>Datos de contacto</h5><dl class="row mb-0">
+    <dt class="col-sm-3">RUT</dt><dd class="col-sm-9">{{ cliente.rut|default:"Sin RUT registrado" }}</dd>
+    <dt class="col-sm-3">Teléfono</dt><dd class="col-sm-9">{{ cliente.telefono|default:"Sin teléfono" }}</dd>
+    <dt class="col-sm-3">Correo electrónico</dt><dd class="col-sm-9">{{ cliente.email|default:"Sin correo" }}</dd>
+    <dt class="col-sm-3">Dirección del cliente</dt><dd class="col-sm-9">{{ cliente.direccion|default:"Sin dirección" }}</dd>
+    <dt class="col-sm-3">Notas</dt><dd class="col-sm-9">{{ cliente.notas|default:"Sin notas"|linebreaksbr }}</dd>
+</dl></div>
+<dl class="summary-grid">
+    <div class="summary-item"><dt>Obras totales / activas</dt><dd>{{ resumen.cantidad }} / {{ resumen.activas }}</dd></div>
+    <div class="summary-item"><dt>Presupuesto acumulado (CLP)</dt><dd>${{ resumen.presupuesto|default:0 }}</dd></div>
+    <div class="summary-item"><dt>Gastos acumulados (CLP)</dt><dd>${{ gastos }}</dd></div>
+    <div class="summary-item"><dt>Saldo acumulado (CLP)</dt><dd class="{% if saldo < 0 %}text-danger{% endif %}">${{ saldo }}</dd></div>
+</dl>
+<div class="bento-card"><h5>Historial de todas las obras</h5><p class="small text-muted">Incluye obras activas e inactivas. Desactive una obra para conservar su historial.</p>
+    <div class="table-responsive"><table class="table align-middle mb-0">
+        <thead><tr><th scope="col">Obra</th><th scope="col">Dirección</th><th scope="col">Inicio</th><th scope="col">Término estimado</th><th scope="col">Estado</th><th scope="col" class="text-end">Presupuesto (CLP)</th></tr></thead>
+        <tbody>{% for proyecto in proyectos %}<tr>
+            <th scope="row"><a href="{% url 'proyecto_detalle' proyecto.pk %}">{{ proyecto.nombre }}</a></th><td>{{ proyecto.direccion|default:"Pendiente" }}</td>
+            <td>{{ proyecto.fecha_inicio|date:"d/m/Y" }}</td><td>{{ proyecto.fecha_termino_estimada|date:"d/m/Y"|default:"Pendiente" }}</td><td>{% if proyecto.activo %}Activa{% else %}Inactiva{% endif %}</td><td class="text-end cifra-monetaria">${{ proyecto.presupuesto_inicial }}</td>
+        </tr>{% empty %}<tr><td colspan="6" class="text-muted text-center py-4">Este cliente aún no tiene obras vinculadas.</td></tr>{% endfor %}</tbody>
+    </table></div>
+</div>
+{% endblock %}

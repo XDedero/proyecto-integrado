@@ -7,7 +7,7 @@ from django.db import IntegrityError
 from django.test import Client, TestCase
 from django.urls import reverse
 
-from .models import GastoMaterial, HitoCalendario, PagoManoObra, PerfilUsuario, Proyecto
+from .models import Cliente, GastoMaterial, HitoCalendario, PagoManoObra, PerfilUsuario, Proyecto
 from .permisos import obtener_rol_usuario
 
 
@@ -21,6 +21,7 @@ class GestionTests(TestCase):
         cls.empleado = User.objects.create_user("empleado", first_name="Pedro", password="PruebaGestion!72")
         cls.otro_empleado = User.objects.create_user("otro", first_name="Pedro", password="PruebaGestion!72")
         cls.superusuario = User.objects.create_superuser("superadmin", password="PruebaGestion!72")
+        cls.cliente = Cliente.objects.create(nombre="Cliente de prueba")
         cls.proyecto = Proyecto.objects.create(nombre="Obra asignada", presupuesto_inicial=1000000, fecha_inicio=date(2026, 11, 1))
         cls.otro_proyecto = Proyecto.objects.create(nombre="Obra reservada", presupuesto_inicial=2000000, fecha_inicio=date(2026, 11, 2))
         cls.empleado.perfil.obra_asignada = cls.proyecto
@@ -37,7 +38,11 @@ class GestionTests(TestCase):
         return datos
 
     def datos_proyecto(self, **cambios):
-        datos = {"nombre": "Obra nueva", "presupuesto_inicial": "45000000", "fecha_inicio": "2026-11-09", "activo": "on"}
+        datos = {
+            "nombre": "Obra nueva", "presupuesto_inicial": "45000000", "fecha_inicio": "2026-11-09", "activo": "on",
+            "cliente": str(self.cliente.pk), "direccion": "Calle Principal 123", "descripcion": "Construcción de vivienda",
+            "fecha_termino_estimada": "2027-04-30", "tipo_obra": "CONSTRUCCION",
+        }
         datos.update(cambios)
         return datos
 

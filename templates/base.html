@@ -86,6 +86,11 @@ h3 { font-size:21px; font-weight:600!important; color:#293f54; } h4 { font-size:
                 <a class="nav-link{% if '/proyectos/' in request.path %} active{% endif %}" {% if request.resolver_match.url_name == 'proyectos' %}aria-current="page"{% endif %} href="{% url 'proyectos' %}">
                     <i class="bi bi-building-add"></i> Obras y presupuestos
                 </a>
+                {% if rol_usuario != 'EMPLEADO' %}
+                <a class="nav-link{% if '/clientes/' in request.path %} active{% endif %}" {% if request.resolver_match.url_name == 'clientes' %}aria-current="page"{% endif %} href="{% url 'clientes' %}">
+                    <i class="bi bi-person-lines-fill"></i> Clientes e historial
+                </a>
+                {% endif %}
                 {% if es_admin %}
                 <a class="nav-link{% if '/usuarios/' in request.path %} active{% endif %}" {% if request.resolver_match.url_name == 'registro_usuario' %}aria-current="page"{% endif %} href="{% url 'registro_usuario' %}">
                     <i class="bi bi-shield-lock"></i> Usuarios y personal

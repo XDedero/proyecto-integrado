@@ -1,0 +1,15 @@
+{
+  "fecha": "2026-11-18",
+  "entorno": "SQLite temporal; datos ficticios",
+  "navegador": "Playwright WebKit; escritorio 1440x1000 y móvil 390x844",
+  "resultado": "OK",
+  "comprobaciones": [
+    "Formulario alterna entre materiales y mano de obra",
+    "Editar gasto modifica su monto y conserva el registro",
+    "Editar pago modifica monto y concepto",
+    "Eliminar pago exige confirmación y retira el registro",
+    "Registrar obra desde el cliente conserva el vínculo",
+    "Historial con varias obras y pantalla móvil sin desborde"
+  ],
+  "errores_javascript": []
+}
