@@ -1,13 +1,23 @@
 {% include "includes/form_errores.html" %}
 <div class="mb-3"><label for="proyecto_id" class="form-label">Obra asociada *</label>{{ form.proyecto_id }}</div>
 <div class="mb-3"><label for="tipo_egreso" class="form-label">Tipo de egreso *</label>{{ form.tipo_egreso }}</div>
+<div class="mb-3"><label for="nombre" class="form-label">Nombre del gasto o pago</label>{{ form.nombre }}</div>
 <div id="bloque_materiales">
     <div class="mb-3"><label for="proveedor" class="form-label">Proveedor *</label>{{ form.proveedor }}</div>
     <div class="mb-3"><label for="categoria" class="form-label">Categoría de material *</label>{{ form.categoria }}</div>
+    <div class="mb-3" id="bloque_nueva_categoria"><label for="nueva_categoria" class="form-label">Nueva categoría de material *</label>{{ form.nueva_categoria }}<div class="form-text">Se guardará para usarla en futuros gastos.</div></div>
 </div>
 <div id="bloque_mano_obra">
     <div class="mb-3"><label for="empleado_id" class="form-label">Empleado registrado</label>{{ form.empleado_id }}</div>
     <div class="mb-3"><label for="trabajador" class="form-label">Nombre del trabajador (si no selecciona una cuenta)</label>{{ form.trabajador }}</div>
     <div class="mb-3"><label for="concepto" class="form-label">Labor o concepto del pago</label>{{ form.concepto }}</div>
 </div>
-<div class="row g-2 mb-4"><div class="col-sm-7"><label for="monto" class="form-label">Monto en CLP *</label>{{ form.monto }}</div><div class="col-sm-5"><label for="fecha" class="form-label">Fecha *</label>{{ form.fecha }}</div></div>
+<div class="row g-2 mb-3"><div class="col-sm-7"><label for="monto" class="form-label">Monto sin flete (CLP) *</label>{{ form.monto }}</div><div class="col-sm-5"><label for="fecha" class="form-label">Fecha *</label>{{ form.fecha }}</div></div>
+<div class="mb-3">
+    <div class="d-flex align-items-center gap-3 mb-2">
+        <button type="button" id="boton_flete" class="btn btn-outline-secondary" aria-controls="bloque_flete" aria-pressed="false">Flete</button>
+        <div class="form-check">{{ form.con_flete }}<label for="con_flete" class="form-check-label">Sí, incluye flete</label></div>
+    </div>
+    <div id="bloque_flete"><label for="monto_flete" class="form-label">Monto del flete (CLP) *</label>{{ form.monto_flete }}</div>
+</div>
+<p class="fw-bold" aria-live="polite">Total del gasto o pago: <output id="total_egreso">$0 CLP</output></p>

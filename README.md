@@ -115,4 +115,8 @@ de obra. Consulte la [guía de funcionalidades y migración](docs/FUNCIONALIDADE
 y el [diagrama de clases editable para draw.io](docs/diagrama-clases.drawio).
 
 Para habilitar la estructura nueva en la base configurada, ejecute
-`python manage.py migrate` (migración `0005_clientes_y_ficha_obra`).
+`python manage.py migrate` (migraciones `0005_clientes_y_ficha_obra` y
+`0006_filtros_egresos_flete_y_opciones`). Gastos y pagos incluye filtro por obra,
+totales de materiales y mano de obra, nombre del registro y flete opcional. Los
+formularios permiten agregar categorías de materiales y tipos de obra; la
+descripción de la obra es opcional.

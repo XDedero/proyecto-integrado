@@ -1,0 +1,15 @@
+<script>
+(() => {
+    const selector = document.getElementById("id_tipo_obra");
+    const campo = document.getElementById("id_nuevo_tipo_obra");
+    if (!selector || !campo) return;
+    function actualizarTipoObra() {
+        const nuevo = selector.value === "__nueva__";
+        campo.closest(".mb-3").hidden = !nuevo;
+        campo.disabled = !nuevo;
+        campo.required = nuevo;
+    }
+    selector.addEventListener("change", actualizarTipoObra);
+    actualizarTipoObra();
+})();
+</script>

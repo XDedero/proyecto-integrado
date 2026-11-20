@@ -5,6 +5,35 @@ function alternarCampos() {
     const esMaterial = selector.value === "MATERIAL";
     document.getElementById("bloque_materiales").hidden = !esMaterial;
     document.getElementById("bloque_mano_obra").hidden = esMaterial;
+    for (const id of ["proveedor", "categoria", "nueva_categoria"]) {
+        document.getElementById(id).disabled = !esMaterial;
+    }
+    for (const id of ["empleado_id", "trabajador", "concepto"]) {
+        document.getElementById(id).disabled = esMaterial;
+    }
+    const nuevaCategoria = esMaterial && document.getElementById("categoria").value === "__nueva__";
+    document.getElementById("bloque_nueva_categoria").hidden = !nuevaCategoria;
+    document.getElementById("nueva_categoria").disabled = !nuevaCategoria;
+    document.getElementById("nueva_categoria").required = nuevaCategoria;
 }
-alternarCampos();
+function actualizarFlete() {
+    const incluye = document.getElementById("con_flete").checked;
+    document.getElementById("bloque_flete").hidden = !incluye;
+    const flete = document.getElementById("monto_flete");
+    flete.disabled = !incluye;
+    flete.required = incluye;
+    flete.min = "1";
+    document.getElementById("boton_flete").setAttribute("aria-pressed", String(incluye));
+    const total = (Number(document.getElementById("monto").value) || 0) + (incluye ? Number(flete.value) || 0 : 0);
+    document.getElementById("total_egreso").textContent = "$" + total.toLocaleString("es-CL") + " CLP";
+}
+if (document.getElementById("tipo_egreso")) {
+    document.getElementById("categoria").addEventListener("change", alternarCampos);
+    document.getElementById("con_flete").addEventListener("change", actualizarFlete);
+    document.getElementById("boton_flete").addEventListener("click", () => document.getElementById("con_flete").click());
+    document.getElementById("monto").addEventListener("input", actualizarFlete);
+    document.getElementById("monto_flete").addEventListener("input", actualizarFlete);
+    alternarCampos();
+    actualizarFlete();
+}
 </script>

@@ -68,7 +68,7 @@ class ObrasClientesPagosTests(TestCase):
             self.assertContains(ficha, dato)
 
     def test_datos_minimos_y_fechas_de_obra_se_validan(self):
-        casos = [{campo: ""} for campo in ("cliente", "direccion", "descripcion", "fecha_termino_estimada")]
+        casos = [{campo: ""} for campo in ("cliente", "direccion", "fecha_termino_estimada")]
         casos += [{"cliente": "999999"}, {"fecha_termino_estimada": "2026-11-17"}, {"fecha_termino_estimada": "2026-02-30"}, {"tipo_obra": "INVALIDO"}]
         for cambios in casos:
             with self.subTest(cambios=cambios):
@@ -318,13 +318,16 @@ class MigracionClientesTests(TransactionTestCase):
             anteriores.get_model("construApp", "PagoManoObra").objects.create(proyecto_id=obra.pk, trabajador="Trabajador anterior", monto=200, fecha=date(2026, 1, 2))
             executor = MigrationExecutor(connection)
             executor.migrate([self.nueva])
-            migrada = Proyecto.objects.get(pk=obra.pk)
+            actuales = executor.loader.project_state([self.nueva]).apps
+            migrada = actuales.get_model("construApp", "Proyecto").objects.get(pk=obra.pk)
             self.assertIsNone(migrada.cliente_id)
             self.assertIsNone(migrada.fecha_termino_estimada)
             self.assertEqual(migrada.direccion, "")
-            self.assertEqual(migrada.saldo_disponible, 700)
+            self.assertEqual(actuales.get_model("construApp", "GastoMaterial").objects.get(proyecto_id=obra.pk).monto, 100)
+            self.assertEqual(actuales.get_model("construApp", "PagoManoObra").objects.get(proyecto_id=obra.pk).monto, 200)
         finally:
-            MigrationExecutor(connection).migrate([self.nueva])
+            executor = MigrationExecutor(connection)
+            executor.migrate(executor.loader.graph.leaf_nodes())
 
     def test_tabla_clientes_recibe_proteccion_de_api_en_postgresql(self):
         migracion = import_module("construApp.migrations.0005_clientes_y_ficha_obra")

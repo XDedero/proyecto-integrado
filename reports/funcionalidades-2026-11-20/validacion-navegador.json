@@ -1,0 +1,20 @@
+{
+  "fecha": "2026-11-20",
+  "entorno": "SQLite temporal; datos ficticios",
+  "navegador": "Playwright WebKit; escritorio 1440x1000 y móvil 390x844",
+  "resultado": "OK",
+  "comprobaciones": [
+    "Formulario alterna entre materiales y mano de obra",
+    "Filtro por obra muestra materiales, mano de obra y total; crear categoría y gasto con nombre y flete actualiza los totales",
+    "Editar conserva base y flete separados; desmarcar flete lo retira del total",
+    "Editar gasto modifica su monto y conserva el registro",
+    "Editar pago modifica monto y concepto",
+    "Eliminar pago exige confirmación y retira el registro",
+    "Registrar obra sin descripción permite agregar un tipo nuevo y conserva el cliente",
+    "Editar obra sin descripción conserva el nuevo tipo de obra",
+    "Historial con varias obras y pantalla móvil sin desborde",
+    "Gastos filtrados y formulario con flete se adaptan a pantalla móvil",
+    "Visualizador puede filtrar gastos sin formulario de escritura ni errores JavaScript"
+  ],
+  "errores_javascript": []
+}

@@ -18,7 +18,7 @@ sys.path.insert(0, str(BASE_DIR))
 os.environ["DJANGO_SETTINGS_MODULE"] = "Proyecto.test_settings"
 
 from django.conf import settings
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import expect, sync_playwright
 
 
 class Silencioso(WSGIRequestHandler):
@@ -27,7 +27,7 @@ class Silencioso(WSGIRequestHandler):
 
 
 def verificar():
-    reportes = BASE_DIR / "reports" / "funcionalidades-2026-11-18"
+    reportes = BASE_DIR / "reports" / "funcionalidades-2026-11-20"
     reportes.mkdir(parents=True, exist_ok=True)
     with TemporaryDirectory(prefix="bd-temporal-", dir=reportes) as temporal:
         assert Path(temporal).resolve().is_relative_to(reportes.resolve())
@@ -43,6 +43,9 @@ def verificar():
 
         call_command("migrate", verbosity=0)
         User.objects.create_user("demo_admin", password="ValidacionLocal!2026", first_name="Luis", is_staff=True)
+        lector = User.objects.create_user("demo_lector", password="ValidacionLocal!2026")
+        lector.perfil.rol = "VISUALIZADOR"
+        lector.perfil.save()
         cliente = Cliente.objects.create(nombre="Cliente de demostración", telefono="+56 9 12345678")
         obra = Proyecto.objects.create(nombre="Vivienda de demostración", cliente=cliente, direccion="Calle de prueba 123", comuna="Santiago", descripcion="Construcción de vivienda", fecha_inicio=date(2026, 11, 1), fecha_termino_estimada=date(2027, 2, 28), presupuesto_inicial=10000000)
         Proyecto.objects.create(nombre="Ampliación de demostración", cliente=cliente, fecha_inicio=date(2026, 5, 1), presupuesto_inicial=5000000, activo=False)
@@ -74,7 +77,7 @@ def verificar():
                     pagina = navegador.new_page(viewport={"width": 1440, "height": 1000})
                     # Misma versión que base.html; permite revisar el diseño cuando
                     # el entorno de verificación no puede acceder al CDN.
-                    css_local = reportes / "bootstrap.min.css"
+                    css_local = BASE_DIR / "reports" / "funcionalidades-2026-11-18" / "bootstrap.min.css"
                     if css_local.exists():
                         pagina.route("https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css", lambda ruta: ruta.fulfill(path=str(css_local), content_type="text/css"))
                     pagina.on("pageerror", lambda error: errores.append(str(error)))
@@ -91,6 +94,44 @@ def verificar():
                     assert pagina.locator("#bloque_materiales").is_hidden()
                     pagina.screenshot(path=str(reportes / "gastos-y-pagos.png"), full_page=True)
                     resultados.append("Formulario alterna entre materiales y mano de obra")
+                    pagina.select_option("#id_proyecto", str(obra.pk))
+                    pagina.get_by_role("button", name="Filtrar", exact=True).click()
+                    pagina.wait_for_url(url + f"/finanzas/?proyecto={obra.pk}")
+                    assert pagina.locator("#total_materiales").inner_text() == "$250000 CLP"
+                    assert pagina.locator("#total_mano_obra").inner_text() == "$150000 CLP"
+                    assert pagina.input_value("#proyecto_id") == str(obra.pk)
+                    pagina.fill("#nombre", "Cerámicas cocina")
+                    pagina.fill("#proveedor", "Proveedor de cerámicas")
+                    pagina.select_option("#categoria", "__nueva__")
+                    assert pagina.locator("#nueva_categoria").is_visible()
+                    pagina.fill("#nueva_categoria", "Cerámicas y pisos")
+                    pagina.fill("#monto", "100000")
+                    pagina.fill("#fecha", "2026-11-20")
+                    assert pagina.locator("#bloque_flete").is_hidden()
+                    pagina.get_by_role("button", name="Flete", exact=True).click()
+                    assert pagina.locator("#con_flete").is_checked()
+                    pagina.fill("#monto_flete", "15000")
+                    assert pagina.locator("#total_egreso").inner_text() == "$115.000 CLP"
+                    pagina.get_by_role("button", name="Guardar egreso").click()
+                    pagina.wait_for_url(url + f"/finanzas/?proyecto={obra.pk}")
+                    expect(pagina.locator("#total_materiales")).to_have_text("$365000 CLP")
+                    assert pagina.locator("#total_egresos").inner_text() == "$515000 CLP"
+                    assert pagina.get_by_role("cell", name="Cerámicas cocina", exact=True).is_visible()
+                    assert pagina.locator("#categoria option").filter(has_text="Cerámicas y pisos").count() == 1
+                    nuevo_gasto = en_base(lambda: GastoMaterial.objects.get(nombre="Cerámicas cocina").pk)
+                    resultados.append("Filtro por obra muestra materiales, mano de obra y total; crear categoría y gasto con nombre y flete actualiza los totales")
+                    pagina.screenshot(path=str(reportes / "filtro-y-flete.png"), full_page=True)
+                    pagina.goto(url + f"/finanzas/material/{nuevo_gasto}/editar/", wait_until="networkidle")
+                    assert pagina.input_value("#monto") == "100000"
+                    assert pagina.input_value("#monto_flete") == "15000"
+                    assert pagina.locator("#con_flete").is_checked()
+                    pagina.locator("#con_flete").uncheck()
+                    assert pagina.locator("#bloque_flete").is_hidden()
+                    assert pagina.locator("#total_egreso").inner_text() == "$100.000 CLP"
+                    pagina.get_by_role("button", name="Guardar cambios").click()
+                    pagina.wait_for_url(url + "/finanzas/")
+                    assert en_base(lambda: GastoMaterial.objects.get(pk=nuevo_gasto).monto_total) == 100000
+                    resultados.append("Editar conserva base y flete separados; desmarcar flete lo retira del total")
                     pagina.goto(url + f"/finanzas/material/{gasto.pk}/editar/", wait_until="networkidle")
                     assert pagina.input_value("#monto") == "250000"
                     pagina.fill("#monto", "300000")
@@ -121,15 +162,25 @@ def verificar():
                     pagina.screenshot(path=str(reportes / "historial-cliente.png"), full_page=True)
                     pagina.get_by_role("link", name="Registrar obra para este cliente").click()
                     assert pagina.input_value("#id_cliente") == str(cliente.pk)
-                    for campo, valor in {"nombre": "Remodelación desde navegador", "descripcion": "Renovación de cocina y comedor", "direccion": "Avenida de prueba 456", "presupuesto_inicial": "2500000", "fecha_inicio": "2026-11-18", "fecha_termino_estimada": "2026-12-18"}.items():
+                    for campo, valor in {"nombre": "Remodelación desde navegador", "direccion": "Avenida de prueba 456", "presupuesto_inicial": "2500000", "fecha_inicio": "2026-11-18", "fecha_termino_estimada": "2026-12-18"}.items():
                         pagina.locator("#id_" + campo).fill(valor)
-                    pagina.select_option("#id_tipo_obra", "REMODELACION")
+                    assert not pagina.locator("#id_descripcion").get_attribute("required")
+                    assert pagina.locator("#id_nuevo_tipo_obra").is_hidden()
+                    pagina.select_option("#id_tipo_obra", "__nueva__")
+                    pagina.fill("#id_nuevo_tipo_obra", "Paisajismo")
                     pagina.screenshot(path=str(reportes / "registro-obra.png"), full_page=True)
                     pagina.get_by_role("button", name="Guardar proyecto").click()
                     pagina.wait_for_url(url + "/proyectos/")
                     nueva_pk, cliente_pk = en_base(lambda: Proyecto.objects.values_list("pk", "cliente_id").get(nombre="Remodelación desde navegador"))
                     assert cliente_pk == cliente.pk
-                    resultados.append("Registrar obra desde el cliente conserva el vínculo")
+                    assert en_base(lambda: Proyecto.objects.get(pk=nueva_pk).tipo_obra) == "Paisajismo"
+                    assert en_base(lambda: Proyecto.objects.get(pk=nueva_pk).descripcion) == ""
+                    resultados.append("Registrar obra sin descripción permite agregar un tipo nuevo y conserva el cliente")
+                    pagina.goto(url + f"/proyectos/{nueva_pk}/editar/", wait_until="networkidle")
+                    assert pagina.input_value("#id_tipo_obra") == "Paisajismo"
+                    pagina.get_by_role("button", name="Guardar cambios").click()
+                    pagina.wait_for_url(url + f"/proyectos/{nueva_pk}/")
+                    resultados.append("Editar obra sin descripción conserva el nuevo tipo de obra")
                     pagina.goto(url + f"/proyectos/{nueva_pk}/", wait_until="networkidle")
                     assert pagina.get_by_role("link", name="Cliente de demostración").is_visible()
                     pagina.screenshot(path=str(reportes / "ficha-obra.png"), full_page=True)
@@ -139,6 +190,20 @@ def verificar():
                     desbordes = pagina.evaluate("Array.from(document.querySelectorAll('body *')).filter(el => el.getBoundingClientRect().right > innerWidth + 1 && getComputedStyle(el).position !== 'absolute').map(el => ({tag:el.tagName,clase:el.className,ancho:el.getBoundingClientRect().width,derecha:el.getBoundingClientRect().right})).slice(0,15)")
                     assert pagina.evaluate("document.documentElement.scrollWidth <= window.innerWidth"), desbordes
                     resultados.append("Historial con varias obras y pantalla móvil sin desborde")
+                    pagina.goto(url + f"/finanzas/?proyecto={obra.pk}", wait_until="networkidle")
+                    pagina.screenshot(path=str(reportes / "gastos-movil.png"), full_page=True)
+                    assert pagina.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+                    resultados.append("Gastos filtrados y formulario con flete se adaptan a pantalla móvil")
+                    pagina.get_by_role("button", name="Cerrar sesión").click()
+                    pagina.wait_for_url(url + "/login/")
+                    pagina.locator("[name=username]").fill("demo_lector")
+                    pagina.locator("[name=password]").fill("ValidacionLocal!2026")
+                    pagina.locator("button[type=submit]").click()
+                    pagina.wait_for_url(url + "/")
+                    pagina.goto(url + f"/finanzas/?proyecto={obra.pk}", wait_until="networkidle")
+                    assert pagina.locator("#total_materiales").inner_text() == "$400000 CLP"
+                    assert pagina.locator("#tipo_egreso").count() == 0
+                    resultados.append("Visualizador puede filtrar gastos sin formulario de escritura ni errores JavaScript")
                     navegador.close()
             finally:
                 servidor.shutdown()
@@ -146,7 +211,7 @@ def verificar():
                 servidor.server_close()
                 connections.close_all()
         assert not errores, errores
-        informe = {"fecha": "2026-11-18", "entorno": "SQLite temporal; datos ficticios", "navegador": "Playwright WebKit; escritorio 1440x1000 y móvil 390x844", "resultado": "OK", "comprobaciones": resultados, "errores_javascript": errores}
+        informe = {"fecha": "2026-11-20", "entorno": "SQLite temporal; datos ficticios", "navegador": "Playwright WebKit; escritorio 1440x1000 y móvil 390x844", "resultado": "OK", "comprobaciones": resultados, "errores_javascript": errores}
         (reportes / "validacion-navegador.json").write_text(json.dumps(informe, ensure_ascii=False, indent=2), encoding="utf-8")
         print(json.dumps(informe, ensure_ascii=True, indent=2))
 

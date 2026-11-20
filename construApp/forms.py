@@ -8,7 +8,40 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils.html import format_html
 
-from .models import Cliente, GastoMaterial, PagoManoObra, PerfilUsuario, Proyecto
+from .models import CategoriaMaterial, Cliente, GastoMaterial, PagoManoObra, PerfilUsuario, Proyecto, TipoObra
+
+
+NUEVA_OPCION = "__nueva__"
+
+
+def opciones_personalizadas(base, modelo):
+    return list(base) + [(nombre, nombre) for nombre in modelo.objects.values_list("nombre", flat=True)] + [(NUEVA_OPCION, "Agregar nueva…")]
+
+
+def resolver_opcion(form, campo, nuevo_campo):
+    valor = form.cleaned_data.get(campo)
+    if valor == NUEVA_OPCION:
+        nombre = form.cleaned_data.get(nuevo_campo, "")
+        if not nombre:
+            if nuevo_campo not in form.errors:
+                form.add_error(nuevo_campo, "Escriba el nombre de la nueva opción.")
+            return ""
+        if nombre == NUEVA_OPCION:
+            form.add_error(nuevo_campo, "Elija otro nombre.")
+            return ""
+        # Reutiliza también las opciones predefinidas si se escribe su etiqueta.
+        for clave, etiqueta in form.fields[campo].choices:
+            if clave != NUEVA_OPCION and nombre.casefold() in (clave.casefold(), etiqueta.casefold()):
+                return clave
+        return nombre
+    return valor
+
+
+def guardar_opcion(modelo, valor, base):
+    if valor not in dict(base):
+        opcion, _ = modelo.objects.get_or_create(nombre__iexact=valor, defaults={"nombre": valor})
+        return opcion.nombre
+    return valor
 
 
 class EstiloFormulario:
@@ -43,13 +76,15 @@ class ClienteForm(EstiloFormulario, forms.ModelForm):
 
 
 class ProyectoForm(EstiloFormulario, forms.ModelForm):
+    tipo_obra = forms.ChoiceField(label="Tipo de obra")
+    nuevo_tipo_obra = forms.CharField(label="Nuevo tipo de obra", max_length=100, required=False)
     presupuesto_inicial = forms.IntegerField(
         label="Presupuesto inicial (CLP)", min_value=1, max_value=2147483647,
     )
     class Meta:
         model = Proyecto
         fields = [
-            "nombre", "cliente", "tipo_obra", "descripcion", "direccion", "comuna", "region",
+            "nombre", "cliente", "tipo_obra", "nuevo_tipo_obra", "descripcion", "direccion", "comuna", "region",
             "responsable", "presupuesto_inicial", "fecha_inicio", "fecha_termino_estimada", "observaciones", "activo",
         ]
         widgets = {
@@ -63,8 +98,10 @@ class ProyectoForm(EstiloFormulario, forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Los registros anteriores pueden seguir incompletos en la base; al guardar
         # una ficha se exigen los datos mínimos de una obra nueva o actualizada.
-        for nombre in ("cliente", "direccion", "descripcion", "fecha_termino_estimada"):
+        for nombre in ("cliente", "direccion", "fecha_termino_estimada"):
             self.fields[nombre].required = True
+        self.fields["tipo_obra"].choices = opciones_personalizadas(Proyecto.TIPOS_OBRA, TipoObra)
+        self.fields["descripcion"].help_text = "Opcional. Puede completar el alcance de los trabajos más adelante."
         self.fields["cliente"].help_text = "Seleccione el cliente existente para conservar todas sus obras en un mismo historial."
         self.aplicar_estilos()
 
@@ -74,14 +111,42 @@ class ProyectoForm(EstiloFormulario, forms.ModelForm):
             raise ValidationError("Ya existe una obra registrada con ese nombre.")
         return nombre
 
+    def clean(self):
+        datos = super().clean()
+        datos["tipo_obra"] = resolver_opcion(self, "tipo_obra", "nuevo_tipo_obra")
+        return datos
+
+    @transaction.atomic
+    def save(self, commit=True):
+        proyecto = super().save(commit=False)
+        if commit:
+            proyecto.tipo_obra = guardar_opcion(TipoObra, self.cleaned_data["tipo_obra"], Proyecto.TIPOS_OBRA)
+            proyecto.save()
+            self.save_m2m()
+        return proyecto
+
+
+class FiltroEgresoForm(EstiloFormulario, forms.Form):
+    proyecto = forms.ModelChoiceField(
+        label="Filtrar por obra", queryset=Proyecto.objects.all(), required=False, empty_label="Todas las obras",
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.aplicar_estilos()
+
 
 class EgresoForm(EstiloFormulario, forms.Form):
     tipo_egreso = forms.ChoiceField(choices=[("MATERIAL", "Compra de materiales"), ("MANO_OBRA", "Pago de mano de obra")])
     proyecto_id = forms.ModelChoiceField(label="Obra asociada", queryset=Proyecto.objects.none())
-    monto = forms.IntegerField(label="Monto en CLP", min_value=1, max_value=2147483647)
+    nombre = forms.CharField(label="Nombre del gasto o pago", max_length=150, required=False)
+    monto = forms.IntegerField(label="Monto sin flete (CLP)", min_value=1, max_value=2147483647)
+    con_flete = forms.BooleanField(label="Sí, incluye flete", required=False)
+    monto_flete = forms.IntegerField(label="Monto del flete (CLP)", min_value=0, max_value=2147483647, required=False)
     fecha = forms.DateField(widget=forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}))
     proveedor = forms.CharField(max_length=100, required=False)
     categoria = forms.ChoiceField(label="Categoría", choices=GastoMaterial.CATEGORIAS, required=False)
+    nueva_categoria = forms.CharField(label="Nueva categoría de material", max_length=100, required=False)
     empleado_id = forms.ModelChoiceField(label="Empleado registrado", queryset=User.objects.none(), required=False)
     trabajador = forms.CharField(label="Nombre del trabajador", max_length=100, required=False)
     concepto = forms.CharField(label="Concepto", max_length=120, required=False, initial="Jornal / Avance de Obra")
@@ -89,6 +154,7 @@ class EgresoForm(EstiloFormulario, forms.Form):
     def __init__(self, *args, instance=None, **kwargs):
         self.instance = instance
         super().__init__(*args, **kwargs)
+        self.fields["categoria"].choices = opciones_personalizadas(GastoMaterial.CATEGORIAS, CategoriaMaterial)
         proyecto_actual = instance.proyecto_id if instance else None
         empleado_actual = instance.empleado_id if isinstance(instance, PagoManoObra) else None
         self.fields["proyecto_id"].queryset = Proyecto.objects.filter(Q(activo=True) | Q(pk=proyecto_actual))
@@ -99,6 +165,7 @@ class EgresoForm(EstiloFormulario, forms.Form):
             self.initial.update({
                 "tipo_egreso": "MATERIAL" if isinstance(instance, GastoMaterial) else "MANO_OBRA",
                 "proyecto_id": instance.proyecto_id, "monto": instance.monto, "fecha": instance.fecha,
+                "nombre": instance.nombre, "con_flete": instance.con_flete, "monto_flete": instance.monto_flete,
             })
             if isinstance(instance, GastoMaterial):
                 self.initial.update(proveedor=instance.proveedor, categoria=instance.categoria)
@@ -114,6 +181,7 @@ class EgresoForm(EstiloFormulario, forms.Form):
     def clean(self):
         datos = super().clean()
         if datos.get("tipo_egreso") == "MATERIAL":
+            datos["categoria"] = resolver_opcion(self, "categoria", "nueva_categoria")
             for campo in ("proveedor", "categoria"):
                 if not datos.get(campo) and campo not in self.errors:
                     self.add_error(campo, "Este campo es obligatorio para una compra de materiales.")
@@ -127,6 +195,13 @@ class EgresoForm(EstiloFormulario, forms.Form):
                 elif "empleado_id" not in self.errors:
                     self.add_error("trabajador", "Seleccione un empleado o escriba el nombre del trabajador.")
             datos["concepto"] = datos.get("concepto") or "Jornal / Avance de Obra"
+        if datos.get("con_flete"):
+            if "monto_flete" not in self.errors and not datos.get("monto_flete"):
+                self.add_error("monto_flete", "Ingrese un monto de flete mayor que cero.")
+        else:
+            datos["monto_flete"] = 0
+        if (datos.get("monto") or 0) + (datos.get("monto_flete") or 0) > 2147483647:
+            self.add_error("monto_flete", "El total con flete no puede superar $2147483647 CLP.")
         return datos
 
     @transaction.atomic
@@ -134,8 +209,10 @@ class EgresoForm(EstiloFormulario, forms.Form):
         datos = self.cleaned_data
         modelo = GastoMaterial if datos["tipo_egreso"] == "MATERIAL" else PagoManoObra
         valores = {"proyecto": datos["proyecto_id"], "monto": datos["monto"], "fecha": datos["fecha"]}
+        valores.update(nombre=datos["nombre"], con_flete=datos["con_flete"], monto_flete=datos["monto_flete"])
         if modelo is GastoMaterial:
-            valores.update(proveedor=datos["proveedor"], categoria=datos["categoria"])
+            categoria = guardar_opcion(CategoriaMaterial, datos["categoria"], GastoMaterial.CATEGORIAS)
+            valores.update(proveedor=datos["proveedor"], categoria=categoria)
         else:
             valores.update(empleado=datos.get("empleado_id"), trabajador=datos["trabajador"], concepto=datos["concepto"])
         if self.instance is None:

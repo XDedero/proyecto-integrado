@@ -3,7 +3,32 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models
-from django.db.models import Sum
+from django.db.models import F, Sum
+from django.db.models.functions import Lower
+
+
+class OpcionPersonalizada(models.Model):
+    nombre = models.CharField(max_length=100)
+
+    class Meta:
+        abstract = True
+        ordering = ["nombre"]
+        constraints = [models.UniqueConstraint(Lower("nombre"), name="%(class)s_nombre_unico")]
+
+    def __str__(self):
+        return self.nombre
+
+
+class CategoriaMaterial(OpcionPersonalizada):
+    class Meta(OpcionPersonalizada.Meta):
+        verbose_name = "Categoría de material"
+        verbose_name_plural = "Categorías de materiales"
+
+
+class TipoObra(OpcionPersonalizada):
+    class Meta(OpcionPersonalizada.Meta):
+        verbose_name = "Tipo de obra"
+        verbose_name_plural = "Tipos de obra"
 
 
 class Cliente(models.Model):
@@ -45,7 +70,7 @@ class Proyecto(models.Model):
     comuna = models.CharField(max_length=100, blank=True, verbose_name="Comuna")
     region = models.CharField(max_length=100, blank=True, verbose_name="Región")
     descripcion = models.TextField(blank=True, verbose_name="Descripción y alcance de los trabajos")
-    tipo_obra = models.CharField(max_length=20, choices=TIPOS_OBRA, default="CONSTRUCCION", verbose_name="Tipo de obra")
+    tipo_obra = models.CharField(max_length=100, default="CONSTRUCCION", verbose_name="Tipo de obra")
     responsable = models.CharField(max_length=150, blank=True, verbose_name="Responsable de la obra")
     observaciones = models.TextField(blank=True, verbose_name="Observaciones y condiciones acordadas")
     presupuesto_inicial = models.PositiveIntegerField(
@@ -70,6 +95,9 @@ class Proyecto(models.Model):
     def __str__(self):
         return f"{self.nombre} (${self.presupuesto_inicial:,} CLP)"
 
+    def get_tipo_obra_display(self):
+        return dict(self.TIPOS_OBRA).get(self.tipo_obra, self.tipo_obra)
+
     def clean(self):
         super().clean()
         if self.fecha_inicio and self.fecha_termino_estimada and self.fecha_termino_estimada < self.fecha_inicio:
@@ -77,12 +105,12 @@ class Proyecto(models.Model):
 
     @property
     def total_materiales(self):
-        resultado = self.gastos_materiales.aggregate(total=Sum("monto"))["total"]
+        resultado = self.gastos_materiales.aggregate(total=Sum(F("monto") + F("monto_flete")))["total"]
         return resultado or 0
 
     @property
     def total_mano_obra(self):
-        resultado = self.pagos_mano_obra.aggregate(total=Sum("monto"))["total"]
+        resultado = self.pagos_mano_obra.aggregate(total=Sum(F("monto") + F("monto_flete")))["total"]
         return resultado or 0
 
     @property
@@ -128,7 +156,33 @@ class PerfilUsuario(models.Model):
         return f"{self.usuario.username} ({self.get_rol_display()})"
 
 
-class GastoMaterial(models.Model):
+class EgresoConFlete(models.Model):
+    nombre = models.CharField(max_length=150, blank=True, verbose_name="Nombre del gasto o pago")
+    con_flete = models.BooleanField(default=False, verbose_name="Incluye flete")
+    monto_flete = models.PositiveIntegerField(default=0, verbose_name="Monto del flete (CLP)")
+
+    class Meta:
+        abstract = True
+        constraints = [
+            models.CheckConstraint(
+                condition=(models.Q(con_flete=True, monto_flete__gt=0) | models.Q(con_flete=False, monto_flete=0)),
+                name="%(class)s_flete_coherente",
+            ),
+        ]
+
+    @property
+    def monto_total(self):
+        return self.monto + self.monto_flete
+
+    def clean(self):
+        super().clean()
+        if self.con_flete and not self.monto_flete:
+            raise ValidationError({"monto_flete": "Ingrese un monto de flete mayor que cero."})
+        if not self.con_flete:
+            self.monto_flete = 0
+
+
+class GastoMaterial(EgresoConFlete):
     """Registra compras de materiales y facturas de proveedores por obra (HU-05)."""
 
     CATEGORIAS = [
@@ -148,22 +202,25 @@ class GastoMaterial(models.Model):
     )
     fecha = models.DateField(verbose_name="Fecha del gasto")
     proveedor = models.CharField(max_length=100, verbose_name="Proveedor")
-    categoria = models.CharField(max_length=30, choices=CATEGORIAS, verbose_name="Categoría")
+    categoria = models.CharField(max_length=100, verbose_name="Categoría")
     monto = models.PositiveIntegerField(
         validators=[MinValueValidator(1)],
         verbose_name="Monto en pesos (CLP)",
     )
 
-    class Meta:
+    class Meta(EgresoConFlete.Meta):
         verbose_name = "Gasto de Material"
         verbose_name_plural = "Gastos de Materiales"
         ordering = ["-fecha", "-id"]
 
     def __str__(self):
-        return f"{self.proveedor} - ${self.monto:,} ({self.proyecto.nombre})"
+        return f"{self.nombre or self.proveedor} - ${self.monto_total:,} ({self.proyecto.nombre})"
+
+    def get_categoria_display(self):
+        return dict(self.CATEGORIAS).get(self.categoria, self.categoria)
 
 
-class PagoManoObra(models.Model):
+class PagoManoObra(EgresoConFlete):
     """Registra pagos de jornales, tratos y sueldos por proyecto y empleado (HU-06)."""
 
     proyecto = models.ForeignKey(
@@ -192,13 +249,13 @@ class PagoManoObra(models.Model):
     )
     fecha = models.DateField(verbose_name="Fecha de pago")
 
-    class Meta:
+    class Meta(EgresoConFlete.Meta):
         verbose_name = "Pago de Mano de Obra"
         verbose_name_plural = "Pagos de Mano de Obra"
         ordering = ["-fecha", "-id"]
 
     def __str__(self):
-        return f"{self.trabajador} - ${self.monto:,} ({self.proyecto.nombre})"
+        return f"{self.nombre or self.trabajador} - ${self.monto_total:,} ({self.proyecto.nombre})"
 
 
 class HitoCalendario(models.Model):

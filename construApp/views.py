@@ -7,10 +7,10 @@ from django.contrib.auth.models import User
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
 from django.db import DatabaseError, IntegrityError, connection, transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, F, Q, Sum
 from django.http import Http404, JsonResponse
 from django.views.decorators.http import require_http_methods, require_POST, require_safe
-from .forms import ClienteForm, EgresoForm, HitoForm, ProyectoForm, UsuarioForm
+from .forms import ClienteForm, EgresoForm, FiltroEgresoForm, HitoForm, ProyectoForm, UsuarioForm
 from .models import Cliente, Proyecto, GastoMaterial, PagoManoObra, HitoCalendario
 from .permisos import obtener_rol_usuario, proyectos_visibles, solo_administrador
 
@@ -79,7 +79,7 @@ def portal_empleado(request):
 
     # La identidad se determina por la cuenta, nunca por coincidencias de nombre.
     mis_pagos = PagoManoObra.objects.filter(empleado=request.user).select_related("proyecto")
-    total_ganado = sum(p.monto for p in mis_pagos)
+    total_ganado = sum(p.monto_total for p in mis_pagos)
 
     # Hitos de la obra asignada al trabajador
     if obra_actual:
@@ -226,8 +226,8 @@ def cliente_detalle(request, pk):
     cliente = get_object_or_404(Cliente, pk=pk)
     proyectos = cliente.proyectos.all()
     resumen = proyectos.aggregate(presupuesto=Sum("presupuesto_inicial"), cantidad=Count("pk"), activas=Count("pk", filter=Q(activo=True)))
-    materiales = GastoMaterial.objects.filter(proyecto__cliente=cliente).aggregate(total=Sum("monto"))["total"] or 0
-    mano_obra = PagoManoObra.objects.filter(proyecto__cliente=cliente).aggregate(total=Sum("monto"))["total"] or 0
+    materiales = GastoMaterial.objects.filter(proyecto__cliente=cliente).aggregate(total=Sum(F("monto") + F("monto_flete")))["total"] or 0
+    mano_obra = PagoManoObra.objects.filter(proyecto__cliente=cliente).aggregate(total=Sum(F("monto") + F("monto_flete")))["total"] or 0
     return render(request, "paginas/cliente_detalle.html", {
         "cliente": cliente, "proyectos": proyectos, "resumen": resumen,
         "gastos": materiales + mano_obra, "saldo": (resumen["presupuesto"] or 0) - materiales - mano_obra,
@@ -263,7 +263,13 @@ def finanzas_view(request):
 
     es_admin = (rol == "ADMIN")
 
-    form = EgresoForm(request.POST if request.method == "POST" else None)
+    filtro = FiltroEgresoForm(request.GET)
+    filtro_valido = filtro.is_valid()
+    obra_filtrada = filtro.cleaned_data.get("proyecto") if filtro_valido else None
+    form = EgresoForm(
+        request.POST if request.method == "POST" else None,
+        initial={"proyecto_id": obra_filtrada.pk if obra_filtrada and obra_filtrada.activo else None},
+    )
     if request.method == "POST" and form.is_valid():
         try:
             form.save()
@@ -271,15 +277,30 @@ def finanzas_view(request):
             form.add_error(None, "No se pudo guardar el egreso. Actualice la página y revise la obra y el empleado.")
         else:
             messages.success(request, "Egreso registrado correctamente. Saldo actualizado.")
+            if obra_filtrada:
+                return redirect(f"{request.path}?proyecto={obra_filtrada.pk}")
             return redirect("finanzas")
 
     proyectos = Proyecto.objects.filter(activo=True)
     empleados = User.objects.filter(perfil__rol="EMPLEADO")
     gastos_materiales = GastoMaterial.objects.select_related("proyecto").all()
     pagos_mano_obra = PagoManoObra.objects.select_related("proyecto", "empleado").all()
+    if not filtro_valido:
+        gastos_materiales = gastos_materiales.none()
+        pagos_mano_obra = pagos_mano_obra.none()
+    elif obra_filtrada:
+        gastos_materiales = gastos_materiales.filter(proyecto=obra_filtrada)
+        pagos_mano_obra = pagos_mano_obra.filter(proyecto=obra_filtrada)
+    total_materiales = gastos_materiales.aggregate(total=Sum(F("monto") + F("monto_flete")))["total"] or 0
+    total_mano_obra = pagos_mano_obra.aggregate(total=Sum(F("monto") + F("monto_flete")))["total"] or 0
 
     contexto = {
         "form": form,
+        "filtro": filtro,
+        "obra_filtrada": obra_filtrada,
+        "total_materiales": total_materiales,
+        "total_mano_obra": total_mano_obra,
+        "total_egresos": total_materiales + total_mano_obra,
         "es_admin": es_admin,
         "proyectos": proyectos,
         "empleados": empleados,

@@ -127,7 +127,9 @@ h4 { font-size:20px; } h5 { font-size:16px; } .display-6 { font-size:26px; }
                         </div>
                         <div class="text-end mt-2 mt-sm-0">
                             <div class="label-tecnico">Monto Percibido</div>
-                            <div class="fs-5 fw-bold cifra-monetaria text-success">${{ pago.monto }} CLP</div>
+                            {% if pago.nombre %}<div class="fw-semibold">{{ pago.nombre }}</div>{% endif %}
+                            <div class="fs-5 fw-bold cifra-monetaria text-success">${{ pago.monto_total }} CLP</div>
+                            {% if pago.con_flete %}<small class="text-muted">Incluye flete: ${{ pago.monto_flete }} CLP</small>{% endif %}
                         </div>
                     </div>
                     {% empty %}

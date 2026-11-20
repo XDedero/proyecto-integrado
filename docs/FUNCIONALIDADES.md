@@ -7,6 +7,23 @@ para administradores. La edición permite corregir obra, fecha, monto y los dato
 del proveedor o trabajador. En los pagos se puede cambiar, conservar o quitar la
 cuenta del empleado. El tipo original de registro se conserva.
 
+El filtro **Filtrar por obra** limita las dos tablas a la obra seleccionada y
+muestra el total de materiales, el de mano de obra y la suma de ambos. Incluye
+obras inactivas para consultar su historial; **Ver todas** restablece la vista.
+El visualizador también puede utilizarlo.
+
+Al registrar o editar se puede asignar un **Nombre del gasto o pago**. La tabla
+muestra ese nombre; en registros sin nombre muestra el proveedor o el concepto.
+En **Categoría de material**, la opción **Agregar nueva…** permite escribir una
+categoría y guardarla junto con el gasto. Queda disponible para futuros registros,
+incluso después de eliminar el gasto que la creó.
+
+El botón **Flete** y la casilla **Sí, incluye flete** activan el monto del flete,
+que debe ser positivo. El formulario muestra el total antes de guardar. El monto
+base y el flete se guardan por separado y se suman en las tablas, saldos de obras,
+historial de clientes y portal de pagos. Al editar se conservan ambos importes;
+desmarcar la casilla elimina el flete del total.
+
 La eliminación muestra primero la obra, fecha, monto y destinatario. Solo el
 botón de confirmación envía el POST que elimina el registro. Los saldos de las
 obras, acumulados de clientes y pagos del portal se calculan desde los registros
@@ -24,13 +41,15 @@ comuna, región, responsable, presupuesto inicial, fecha de inicio, término
 estimado, condiciones y observaciones, además del indicador de obra activa.
 
 Al crear o actualizar una obra son obligatorios el nombre, cliente, tipo de obra,
-descripción, dirección, presupuesto y ambas fechas. El presupuesto debe ser
+dirección, presupuesto y ambas fechas. **Descripción y alcance de los trabajos**
+es opcional en ambos casos. En **Tipo de obra**, **Agregar nueva…** permite
+registrar un tipo que queda disponible para futuras obras. El presupuesto debe ser
 positivo y el término estimado no puede ser anterior al inicio; esta última
 condición también se comprueba en la base de datos.
 
 Las obras anteriores conservan sus datos y pueden consultarse aunque todavía no
 tengan cliente, dirección, descripción o término estimado. Al editar se debe
-completar la ficha. No se inventan clientes ni fechas para los registros antiguos.
+completar los campos obligatorios de la ficha. No se inventan clientes ni fechas para los registros antiguos.
 
 ## Clientes e historial
 
@@ -67,14 +86,20 @@ campos de obra sin borrar ni reasignar registros existentes. En PostgreSQL con
 roles de Supabase también activa RLS y revoca el acceso de `PUBLIC`, `anon` y
 `authenticated` a la tabla nueva, siguiendo la protección del resto del sistema.
 
+La migración `0006_filtros_egresos_flete_y_opciones` incorpora nombre y flete a
+gastos y pagos, amplía los campos de categoría y tipo de obra y crea sus catálogos
+personalizados con la misma protección de la API de Supabase. Los registros
+anteriores conservan sus montos y quedan sin flete. Las categorías y tipos
+predefinidos siguen disponibles.
+
 Con el entorno y la base de destino configurados, ejecute:
 
 ```powershell
 .\.venv\Scripts\python.exe manage.py migrate
 ```
 
-La migración se verificó sobre SQLite aislado. No se aplicó a la base remota ni
-se realizó un despliegue desde esta tarea.
+Las migraciones se verifican sobre SQLite aislado. El build de Render ejecuta
+`migrate --noinput` antes de iniciar la aplicación.
 
 ## Diagrama de clases editable
 

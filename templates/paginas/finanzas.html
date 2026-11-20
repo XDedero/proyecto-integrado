@@ -8,13 +8,27 @@
     <h3 class="fw-bold mb-0 mt-1">Registro de gastos y pagos</h3>
 </div>
 
+<div class="bento-card mb-4">
+    <form method="get" action="{% url 'finanzas' %}" class="row g-3 align-items-end">
+        <div class="col-md-7"><label for="{{ filtro.proyecto.id_for_label }}" class="form-label">Filtrar por obra</label>{{ filtro.proyecto }}{% for error in filtro.proyecto.errors %}<div class="text-danger small" role="alert">{{ error }}</div>{% endfor %}</div>
+        <div class="col-md-5 d-flex gap-2"><button type="submit" class="btn btn-obra">Filtrar</button><a href="{% url 'finanzas' %}" class="btn btn-outline-secondary">Ver todas</a></div>
+    </form>
+    <p class="mt-3 mb-2 fw-semibold">{% if filtro.errors %}Seleccione una obra válida para consultar sus totales{% elif obra_filtrada %}Totales de {{ obra_filtrada.nombre }}{% else %}Totales de todas las obras{% endif %}</p>
+    <div class="row g-3">
+        <div class="col-sm-4"><span class="text-muted">Materiales</span><div class="fs-5 fw-bold" id="total_materiales">${{ total_materiales }} CLP</div></div>
+        <div class="col-sm-4"><span class="text-muted">Mano de obra</span><div class="fs-5 fw-bold" id="total_mano_obra">${{ total_mano_obra }} CLP</div></div>
+        <div class="col-sm-4"><span class="text-muted">Total de gastos y pagos</span><div class="fs-5 fw-bold" id="total_egresos">${{ total_egresos }} CLP</div></div>
+    </div>
+    <p class="form-text mb-0">Los totales incluyen los fletes registrados.</p>
+</div>
+
 <div class="row g-4">
     {% if es_admin %}
     <!-- Formulario Unificado para Administrador -->
     <div class="col-lg-5">
         <div class="bento-card">
             <h5 class="fw-bold mb-3">Registrar gasto o pago</h5>
-            <form method="POST" action="{% url 'finanzas' %}">
+            <form method="POST" action="{% url 'finanzas' %}{% if obra_filtrada %}?proyecto={{ obra_filtrada.pk }}{% endif %}">
                 {% csrf_token %}
                 {% include "includes/egreso_campos.html" %}
 
@@ -36,9 +50,10 @@
                         <tr>
                             <th>Fecha</th>
                             <th>Obra</th>
+                            <th>Nombre del gasto</th>
                             <th>Proveedor</th>
                             <th>Categoría</th>
-                            <th class="text-end">Monto CLP</th>
+                            <th class="text-end">Total CLP</th>
                             {% if es_admin %}<th scope="col">Acciones</th>{% endif %}
                         </tr>
                     </thead>
@@ -47,13 +62,14 @@
                         <tr>
                             <td>{{ g.fecha }}</td>
                             <td class="fw-semibold">{{ g.proyecto.nombre }}</td>
+                            <td>{{ g.nombre|default:g.proveedor }}</td>
                             <td>{{ g.proveedor }}</td>
                             <td><span class="badge bg-warning text-dark">{{ g.get_categoria_display }}</span></td>
-                            <td class="text-end fw-bold text-danger">-${{ g.monto }}</td>
+                            <td class="text-end"><strong class="text-danger">-${{ g.monto_total }}</strong>{% if g.con_flete %}<small class="d-block text-muted">Base: ${{ g.monto }}<br>Flete: ${{ g.monto_flete }}</small>{% endif %}</td>
                             {% if es_admin %}<td><div class="d-flex flex-wrap gap-2"><a href="{% url 'egreso_editar' 'material' g.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Editar gasto de {{ g.proveedor }}">Editar</a><a href="{% url 'egreso_eliminar' 'material' g.pk %}" class="btn btn-sm btn-outline-danger" aria-label="Eliminar gasto de {{ g.proveedor }}">Eliminar</a></div></td>{% endif %}
                         </tr>
                         {% empty %}
-                        <tr><td colspan="{% if es_admin %}6{% else %}5{% endif %}" class="text-center text-muted py-3">Sin compras de materiales registradas.</td></tr>
+                        <tr><td colspan="{% if es_admin %}7{% else %}6{% endif %}" class="text-center text-muted py-3">Sin compras de materiales registradas{% if obra_filtrada %} para esta obra{% endif %}.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -68,9 +84,10 @@
                         <tr>
                             <th>Fecha</th>
                             <th>Obra</th>
+                            <th>Nombre del pago</th>
                             <th>Trabajador</th>
                             <th>Concepto</th>
-                            <th class="text-end">Monto CLP</th>
+                            <th class="text-end">Total CLP</th>
                             {% if es_admin %}<th scope="col">Acciones</th>{% endif %}
                         </tr>
                     </thead>
@@ -79,13 +96,14 @@
                         <tr>
                             <td>{{ m.fecha }}</td>
                             <td class="fw-semibold">{{ m.proyecto.nombre }}</td>
+                            <td>{{ m.nombre|default:m.concepto }}</td>
                             <td>{{ m.trabajador }}</td>
                             <td><span class="badge bg-info text-dark">{{ m.concepto }}</span></td>
-                            <td class="text-end fw-bold text-danger">-${{ m.monto }}</td>
+                            <td class="text-end"><strong class="text-danger">-${{ m.monto_total }}</strong>{% if m.con_flete %}<small class="d-block text-muted">Base: ${{ m.monto }}<br>Flete: ${{ m.monto_flete }}</small>{% endif %}</td>
                             {% if es_admin %}<td><div class="d-flex flex-wrap gap-2"><a href="{% url 'egreso_editar' 'mano-obra' m.pk %}" class="btn btn-sm btn-outline-secondary" aria-label="Editar pago de {{ m.trabajador }}">Editar</a><a href="{% url 'egreso_eliminar' 'mano-obra' m.pk %}" class="btn btn-sm btn-outline-danger" aria-label="Eliminar pago de {{ m.trabajador }}">Eliminar</a></div></td>{% endif %}
                         </tr>
                         {% empty %}
-                        <tr><td colspan="{% if es_admin %}6{% else %}5{% endif %}" class="text-center text-muted py-3">Sin pagos de mano de obra registrados.</td></tr>
+                        <tr><td colspan="{% if es_admin %}7{% else %}6{% endif %}" class="text-center text-muted py-3">Sin pagos de mano de obra registrados{% if obra_filtrada %} para esta obra{% endif %}.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
